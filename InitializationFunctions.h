@@ -39,7 +39,7 @@ void validate_mv_or_ss_file(std::fstream& mv_or_ss_file, std::string means_and_v
 int find_error_mv_or_ss_file(std::fstream& mv_or_ss_file, int net_number_of_neurons_in_hidden_layers);
 
 	// parse the running means and variances OR shifts and scales file
-void parse_mv_or_ss_file(std::fstream& mv_or_ss_file, double** mv_or_ss, int net_number_of_neurons_in_hidden_layers);
+void parse_mv_or_ss_file(std::fstream& mv_or_ss_file, double* means_or_scales, double* variances_or_shifts, int net_number_of_neurons_in_hidden_layers);
 
 // dataset file methods
 

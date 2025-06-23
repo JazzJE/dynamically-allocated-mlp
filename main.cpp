@@ -37,18 +37,17 @@
 int main()
 {
 	// !!! REMINDER that the last column is the column of values you want to predict !!!
-		// for example, if you have features of a house and want to predict price, then make the house prices the last column
-		// of the csv that you want to use as your database
-	// data set used: https://www.kaggle.com/datasets/meharshanali/amazon-stocks-2025	
+		// for example, if you have features of a house and want to predict price, then make the house prices the last column of the csv
+	// data set used: https://www.kaggle.com/datasets/camnugent/california-housing-prices?resource=download
 
 	// !!! NOTE AGAIN that this program is hard-written with a single neuron for output !!!
 	// this is the order and number of neurons you want in each hidden layer
 	// in the below example...
-		// the first hidden layer will have 5 neurons
-		// the second hidden layer will have 10 neurons
-		// the third hidden layer will have 3 neurons
-		// the fourth/output layer will have 1 neuron, predicting the value
-	const int number_of_neurons_each_hidden_layer[] = { 1000, 500, 250 };
+		// the first hidden layer will have 256 neurons
+		// the second hidden layer will have 128 neurons
+		// the third hidden layer will have 32 neurons
+		// the fourth/output layer (automatically/implicitly created) will have 1 neuron, predicting the value
+	const int number_of_neurons_each_hidden_layer[] = { 256, 128, 32 };
 
 	// some initialization parameters; leave these alone if you don't know how they work
 	const int batch_size = 128;
@@ -58,6 +57,14 @@ int main()
 
 	// check if there is a negative number or zero in the number of neurons each hidden layer array
 	int number_of_hidden_layers = sizeof(number_of_neurons_each_hidden_layer) / sizeof(int);
+	
+	if (number_of_hidden_layers == 0)
+	{
+		std::cerr << "[ERROR] Before using this program, please ensure that the \'number_of_neurons_each_hidden_layer\' array "
+			<< "has at least 1 integer.";
+		exit(0);
+	}
+
 	for (int i = 0; i < number_of_hidden_layers; i++)
 	{
 		if (number_of_neurons_each_hidden_layer[i] <= 0)
@@ -88,13 +95,6 @@ int main()
 	// calculate number of samples, features, and number of hidden layers
 	int number_of_samples = count_number_of_samples(dataset_file);
 	int number_of_features = count_number_of_features(dataset_file);
-
-	if (number_of_hidden_layers == 0)
-	{
-		std::cerr << "[ERROR] Before using this program, please ensure that the \'number_of_neurons_each_hidden_layer\' array " 
-			<< "has at least 1 integer.";
-		exit(0);
-	}
 
 	// ensure that the dataset file has the correct number of features for each line, and if not, then end the program
 	validate_dataset_file(dataset_file, dataset_file_name, number_of_features);
@@ -183,10 +183,11 @@ int main()
 	validate_mv_or_ss_file(means_and_vars_file, means_and_vars_file_name, net_number_of_neurons_in_hidden_layers);
 
 	// allocate memory for means and variances
-	double** means_and_variances = allocate_memory_for_mv_or_ss(net_number_of_neurons_in_hidden_layers);
+	double* means = new double[net_number_of_neurons_in_hidden_layers];
+	double* variances = new double[net_number_of_neurons_in_hidden_layers];
 
 	// parse the means and variances
-	parse_mv_or_ss_file(means_and_vars_file, means_and_variances, net_number_of_neurons_in_hidden_layers);
+	parse_mv_or_ss_file(means_and_vars_file, means, variances, net_number_of_neurons_in_hidden_layers);
 
 	// close the file
 	means_and_vars_file.close();
@@ -211,10 +212,11 @@ int main()
 	validate_mv_or_ss_file(scales_and_shifts_file, scales_and_shifts_file_name, net_number_of_neurons_in_hidden_layers);
 
 	// allocate memory for scales and shifts
-	double** scales_and_shifts = allocate_memory_for_mv_or_ss(net_number_of_neurons_in_hidden_layers);
+	double* scales = new double[net_number_of_neurons_in_hidden_layers];
+	double* shifts = new double[net_number_of_neurons_in_hidden_layers];
 
 	// parse the scales and shifts
-	parse_mv_or_ss_file(scales_and_shifts_file, scales_and_shifts, net_number_of_neurons_in_hidden_layers);
+	parse_mv_or_ss_file(scales_and_shifts_file, scales, shifts, net_number_of_neurons_in_hidden_layers);
 
 	// close the file
 	scales_and_shifts_file.close();
@@ -233,7 +235,7 @@ int main()
 	generate_border_line();
 
 	// create the neural network
-	NeuralNetwork neural_network(weights, biases, means_and_variances, scales_and_shifts, number_of_neurons_each_hidden_layer, 
+	NeuralNetwork neural_network(weights, biases, means, variances, scales, shifts, number_of_neurons_each_hidden_layer, 
 		net_number_of_neurons_in_hidden_layers, number_of_hidden_layers, number_of_features, batch_size, learning_rate, regularization_rate);
 
 	while (true)
@@ -275,7 +277,9 @@ int main()
 			std::cout << "\n\tRandomizing samples' order...";
 			for (int s = 0; s < number_of_shuffles; s++)
 				randomize_training_samples(training_features, target_values, number_of_samples);
-			std::cout << "\n\tDone!";
+			std::cout << "\n\tDone!\n";
+
+			break; // end case
 
 		case '3': // predict a value
 
@@ -302,8 +306,8 @@ int main()
 
 			update_weights_and_biases_file(weights_and_biases_file_name, weights, biases, 
 				number_of_neurons_each_hidden_layer, number_of_hidden_layers, number_of_features);
-			update_mv_or_ss_file(means_and_vars_file_name, means_and_variances, net_number_of_neurons_in_hidden_layers);
-			update_mv_or_ss_file(scales_and_shifts_file_name, scales_and_shifts, net_number_of_neurons_in_hidden_layers);
+			update_mv_or_ss_file(means_and_vars_file_name, means, variances, net_number_of_neurons_in_hidden_layers);
+			update_mv_or_ss_file(scales_and_shifts_file_name, scales, shifts, net_number_of_neurons_in_hidden_layers);
 
 			break; // end case
 

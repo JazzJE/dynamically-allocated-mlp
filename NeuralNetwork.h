@@ -27,8 +27,10 @@ private:
 
 	double*** const network_weights;
 	double** const network_biases;
-	double** const network_means_and_variances;
-	double** const network_scales_and_shifts;
+	double* const network_running_means;
+	double* const network_running_variances;
+	double* const network_scales;
+	double* const network_shifts;
 	
 	// this will save and write out to the neural network the best state of the program
 	// only really will be used during training
@@ -37,8 +39,11 @@ private:
 		// store pointers to the network weights, biases, means & variances, and scales & shifts
 		double*** const current_weights;
 		double** const current_biases;
-		double** const current_means_and_variances;
-		double** const current_scales_and_shifts;
+		double* const current_running_means;
+		double* const current_running_variances;
+		double* const current_scales;
+		double* const current_shifts;
+
 		// use these to interact with the pointers
 		const int* number_of_neurons_each_hidden_layer;
 		const int number_of_hidden_layers;
@@ -48,12 +53,14 @@ private:
 		// store pointers to the best states
 		double*** const best_weights;
 		double** const best_biases;
-		double** const best_means_and_variances;
-		double** const best_scales_and_shifts;
+		double* const best_running_means;
+		double* const best_running_variances;
+		double* const best_scales;
+		double* const best_shifts;
 
-		BestStateLoader(double*** network_weights, double** network_biases, double** network_means_and_variances, double** scales_and_shifts,
-			const int* number_of_neurons_each_hidden_layer, int number_of_hidden_layers, int net_number_of_neurons_in_hidden_layers,
-			int network_number_of_features);
+		BestStateLoader(double*** network_weights, double** network_biases, double* network_means, double* network_variances, 
+			double* network_scales, double* network_shifts, const int* number_of_neurons_each_hidden_layer, int number_of_hidden_layers,
+			int net_number_of_neurons_in_hidden_layers, int network_number_of_features);
 
 		~BestStateLoader();
 
@@ -75,7 +82,6 @@ private:
 	// training components
 	void early_stop_training(BestStateLoader& bs_loader, double** training_features_normalized, double* target_values,
 		int lower_cross_validation_index, int higher_cross_validation_index, int number_of_samples);
-
 	void train_network(double** normalized_batch_input_features, double* target_values);
 	int* select_random_batch_indices(int number_of_samples, int lower_validation_index = -1, int higher_validation_index = -1); // select random batch samples for training
 	void calculate_training_predictions(double** normalized_batch_input_features); // compute the predictions of all the samples; need to do this so we can have the input features of each layer and can thus apply gradient descent
@@ -85,7 +91,7 @@ private:
 public:
 
 	// initialize all the variables
-	NeuralNetwork(double*** weights, double** biases, double** means_and_variances, double** scales_and_shifts, 
+	NeuralNetwork(double*** weights, double** biases, double* means, double* variances, double* scales, double* shifts, 
 		const int* number_of_neurons_each_hidden_layer, int net_number_of_neurons_in_hidden_layers, int number_of_hidden_layers, 
 		int number_of_features, int batch_size, double learning_rate, double regularization_rate);
 

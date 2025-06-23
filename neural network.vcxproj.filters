@@ -33,9 +33,6 @@
     <ClCompile Include="NeuralNetwork.cpp">
       <Filter>Source Files\Neural Network Files %28.cpp%29</Filter>
     </ClCompile>
-    <ClCompile Include="Neuron.cpp">
-      <Filter>Source Files\Neural Network Files %28.cpp%29</Filter>
-    </ClCompile>
     <ClCompile Include="InitializationFunctions.cpp">
       <Filter>Source Files\Main Files %28.cpp%29</Filter>
     </ClCompile>
@@ -54,18 +51,12 @@
     <ClCompile Include="OutputLayer.cpp">
       <Filter>Source Files\Neural Network Files %28.cpp%29</Filter>
     </ClCompile>
-    <ClCompile Include="OutputNeuron.cpp">
-      <Filter>Source Files\Neural Network Files %28.cpp%29</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DenseLayer.h">
       <Filter>Header Files\Neural Network Files %28.h%29</Filter>
     </ClInclude>
     <ClInclude Include="NeuralNetwork.h">
-      <Filter>Header Files\Neural Network Files %28.h%29</Filter>
-    </ClInclude>
-    <ClInclude Include="Neuron.h">
       <Filter>Header Files\Neural Network Files %28.h%29</Filter>
     </ClInclude>
     <ClInclude Include="InitializationFunctions.h">
@@ -81,9 +72,6 @@
       <Filter>Header Files\Main Files %28.h%29</Filter>
     </ClInclude>
     <ClInclude Include="OutputLayer.h">
-      <Filter>Header Files\Neural Network Files %28.h%29</Filter>
-    </ClInclude>
-    <ClInclude Include="OutputNeuron.h">
       <Filter>Header Files\Neural Network Files %28.h%29</Filter>
     </ClInclude>
   </ItemGroup>

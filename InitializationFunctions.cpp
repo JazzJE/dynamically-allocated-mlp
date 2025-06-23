@@ -341,7 +341,7 @@ int find_error_mv_or_ss_file(std::fstream& mv_or_ss_file, int net_number_of_neur
 }
 
 	// parse the running means and variances OR shifts and scales file
-void parse_mv_or_ss_file(std::fstream& mv_or_ss_file, double** mv_or_ss, int net_number_of_neurons_in_hidden_layers)
+void parse_mv_or_ss_file(std::fstream& mv_or_ss_file, double* means_or_scales, double* variances_or_shifts, int net_number_of_neurons_in_hidden_layers)
 {
 	std::string line, value;
 	std::stringstream ss;
@@ -352,11 +352,11 @@ void parse_mv_or_ss_file(std::fstream& mv_or_ss_file, double** mv_or_ss, int net
 		ss.clear();
 		ss.str(line);
 
-		for (int i = 0; i < 2; i++)
-		{
-			getline(ss, value, ',');
-			mv_or_ss[n][i] = std::stod(value);
-		}
+		getline(ss, value, ',');
+		means_or_scales[n] = std::stod(value);
+
+		getline(ss, value, '\n');
+		variances_or_shifts[n] = std::stod(value);
 	}
 }
 

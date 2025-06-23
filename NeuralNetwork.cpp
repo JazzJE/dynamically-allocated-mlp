@@ -8,14 +8,14 @@
 		// the number of weights they will have (which is the number of neurons in the previous layer but number of features for first layer),
 		// and the number of neurons they will have
 
-NeuralNetwork::NeuralNetwork(double*** weights, double** biases, double** means_and_variances, double** scales_and_shifts,
+NeuralNetwork::NeuralNetwork(double*** weights, double** biases, double* running_means, double* running_variances, double* scales, double* shifts,
 	const int* number_of_neurons_each_hidden_layer, int net_number_of_neurons_in_hidden_layers, int number_of_hidden_layers, int number_of_features,
 	int batch_size, double learning_rate, double regularization_rate) :
 	
 	network_number_of_features(number_of_features), number_of_neurons_each_hidden_layer(number_of_neurons_each_hidden_layer),
 	number_of_hidden_layers(number_of_hidden_layers), network_learning_rate(new double(learning_rate)), 
 	network_regularization_rate(new double(regularization_rate)), network_weights(weights), network_biases(biases), 
-	network_means_and_variances(means_and_variances), network_scales_and_shifts(scales_and_shifts), batch_size(batch_size), 
+	network_running_means(running_means), network_running_variances(running_variances), network_scales(scales), network_shifts(shifts), batch_size(batch_size),
 	hidden_layers(new DenseLayer*[number_of_hidden_layers]), net_number_of_neurons_in_hidden_layers(net_number_of_neurons_in_hidden_layers),
 	
 	// output layer
@@ -31,9 +31,14 @@ NeuralNetwork::NeuralNetwork(double*** weights, double** biases, double** means_
 	// if there is only hidden layer, then hook the output and input layer to this layer
 	if (number_of_hidden_layers == 1)
 
-		hidden_layers[0] = new DenseLayer(weights[0], biases[0], &means_and_variances[0],
-			&scales_and_shifts[0], output_layer->get_training_layer_input_features(), output_layer->get_layer_input_features(), 
-			batch_size, number_of_features, number_of_neurons_each_hidden_layer[0], network_learning_rate, network_regularization_rate);
+		/*
+		DenseLayer::DenseLayer(double** layer_weights, double* layer_biases, double* running_means, double* running_variances, double* scales,
+	double* shifts, double** training_layer_activation_values, double* layer_activation_array, int batch_size, int number_of_features,
+	int number_of_neurons, double* layer_learning_rate, double* layer_regularization_rate) :
+		*/
+		*hidden_layers = new DenseLayer(*weights, *biases, running_means, running_variances, scales, shifts, 
+			output_layer->get_training_input_features(), output_layer->get_input_features(), batch_size, number_of_features, 
+			*number_of_neurons_each_hidden_layer, network_learning_rate, network_regularization_rate);
 	
 	// else, if there are n layers
 	else
@@ -43,56 +48,45 @@ NeuralNetwork::NeuralNetwork(double*** weights, double** biases, double** means_
 
 		// hook the nth layer to the output layer
 		current_index -= number_of_neurons_each_hidden_layer[number_of_hidden_layers - 1];
-		hidden_layers[number_of_hidden_layers - 1] = new DenseLayer(weights[number_of_hidden_layers - 1], biases[number_of_hidden_layers - 1], 
-			&means_and_variances[current_index], &scales_and_shifts[current_index], output_layer->get_training_layer_input_features(), 
-			output_layer->get_layer_input_features(), batch_size, number_of_neurons_each_hidden_layer[number_of_hidden_layers - 2], 
+		hidden_layers[number_of_hidden_layers - 1] = new DenseLayer(weights[number_of_hidden_layers - 1], 
+			biases[number_of_hidden_layers - 1], running_means + current_index, running_variances + current_index, scales + current_index, 
+			shifts + current_index, output_layer->get_training_input_features(), output_layer->get_input_features(), batch_size, 
+			number_of_neurons_each_hidden_layer[number_of_hidden_layers - 2], 
 			number_of_neurons_each_hidden_layer[number_of_hidden_layers - 1], network_learning_rate, network_regularization_rate);
 
 		// for each current layer
 		for (int l = number_of_hidden_layers - 1; l > 1; l--)
 		{
 			current_index -= number_of_neurons_each_hidden_layer[l - 1];
-			hidden_layers[l - 1] = new DenseLayer(weights[l - 1], biases[l - 1], &means_and_variances[current_index], 
-				&scales_and_shifts[current_index], hidden_layers[l]->get_training_layer_input_features(), 
-				hidden_layers[l]->get_layer_input_features(),
-				batch_size, number_of_neurons_each_hidden_layer[l - 2], number_of_neurons_each_hidden_layer[l - 1], 
-				network_learning_rate, network_regularization_rate);
+			hidden_layers[l - 1] = new DenseLayer(weights[l - 1], biases[l - 1], running_means + current_index, running_variances + current_index, 
+				scales + current_index, shifts + current_index, hidden_layers[l]->get_training_input_features(),
+				hidden_layers[l]->get_input_features(), batch_size, number_of_neurons_each_hidden_layer[l - 2], 
+				number_of_neurons_each_hidden_layer[l - 1], network_learning_rate, network_regularization_rate);
 		}
 
 		// hook the 1st layer to the input features of the 2nd layer, but also hook to the input features of the input layer
 		// note that the current_index will always equal to 0 at this point
-		hidden_layers[0] = new DenseLayer(weights[0], biases[0], &means_and_variances[0], &scales_and_shifts[0], 
-			hidden_layers[1]->get_training_layer_input_features(), hidden_layers[1]->get_layer_input_features(), 
-			batch_size, network_number_of_features, number_of_neurons_each_hidden_layer[0], network_learning_rate, 
-			network_regularization_rate);
+		*hidden_layers = new DenseLayer(*weights, *biases, running_means, running_variances, scales, shifts, hidden_layers[1]->get_training_input_features(),
+			hidden_layers[1]->get_input_features(), batch_size, network_number_of_features, *number_of_neurons_each_hidden_layer, 
+			network_learning_rate, network_regularization_rate);
 	}
 
 }
 
-// delete all dynamically allocated objects
 NeuralNetwork::~NeuralNetwork()
 {
-	for (int l = 0; l < number_of_hidden_layers; l++)
-		delete hidden_layers[l];
+	for (int i = 0; i < number_of_hidden_layers; i++)
+		delete hidden_layers[i];
 	delete[] hidden_layers;
 
 	delete output_layer;
-
-	delete network_regularization_rate;
-	delete network_learning_rate;
-
-	deallocate_memory_for_weights(network_weights, number_of_neurons_each_hidden_layer, number_of_hidden_layers);
-	deallocate_memory_for_biases(network_biases, number_of_hidden_layers);
-
-	deallocate_memory_for_mv_or_ss(network_means_and_variances, net_number_of_neurons_in_hidden_layers);
-	deallocate_memory_for_mv_or_ss(network_scales_and_shifts, net_number_of_neurons_in_hidden_layers);
 }
 
 // train the neural network five times based on the number of training samples
 void NeuralNetwork::five_fold_train(double** training_features, double* target_values, int number_of_samples)
 {
 	// create these pointers to store the best weights and best bias values for the current iteration
-	BestStateLoader bs_loader(network_weights, network_biases, network_means_and_variances, network_scales_and_shifts,
+	BestStateLoader bs_loader(network_weights, network_biases, network_running_means, network_running_variances, network_scales, network_shifts,
 		get_number_of_neurons_each_hidden_layer(), number_of_hidden_layers, net_number_of_neurons_in_hidden_layers, network_number_of_features);
 
 	int lower_cross_validation_index, higher_cross_validation_index;
@@ -173,7 +167,7 @@ void NeuralNetwork::early_stop_training(BestStateLoader& bs_loader, double** tra
 	// the best state of the nn is initially the current state
 	bs_loader.save_current_state();
 
-	std::cout << "\n\n\t\tInitial MSE is " << best_mse << ".";
+	std::cout << "\n\n\t\tInitial cross-validation MSE is " << best_mse << ".";
 
 	while (failed_epochs < patience)
 	{
@@ -202,17 +196,17 @@ void NeuralNetwork::early_stop_training(BestStateLoader& bs_loader, double** tra
 		// end training early if we get infinite values
 		if (std::isnan(current_mse))
 		{
-			std::cout << "\n\n\t\tInfinite mean squared error detected. Ending this fold early...";
+			std::cout << "\n\n\t\tInfinite MSE detected. Ending this fold early...";
 			break;
 		}
 		else if (current_mse > best_mse)
 		{
 			failed_epochs++;
 			std::cout << "\n\n\t\tTraining iteration #" << training_iteration_number << ": Current MSE - " << current_mse << ", Best MSE - " << best_mse
-				<< "\n\t\t\tCurrent MSE is greater than Best MSE. Failed epochs is now " << failed_epochs << ".";
+				<< "\n\t\t\tCurrent cross-validation MSE is greater than best cross-validation MSE. Failed epochs is now " << failed_epochs << ".";
 			
 			// decay rate for if the learning rate is too large
-			if (failed_epochs % 3 == 0)
+			if (failed_epochs % 7 == 0)
 			{
 				*network_learning_rate *= 0.9;
 				std::cout << "\n\n\t\tDecaying learning rate by a factor of 0.9... The new value of the learning rate is " << 
@@ -223,12 +217,14 @@ void NeuralNetwork::early_stop_training(BestStateLoader& bs_loader, double** tra
 		{
 			failed_epochs = 0;
 			std::cout << "\n\n\t\tTraining iteration #" << training_iteration_number << ": Current MSE - " << current_mse << ", Best MSE - " << best_mse
-				<< "\n\t\t\tCurrent MSE is less than Best MSE. Failed epochs is now " << failed_epochs << ". Saving current state...";
+				<< "\n\t\t\tCurrent cross-validation MSE is less than best cross-validation MSE. Failed epochs is now " 
+				<< failed_epochs << ". Saving current state...";
 			bs_loader.save_current_state();
 			best_mse = current_mse;
 		}
 	}
 
+	std::cout << "\n\n\t\tRestoring initial value of the learning rate...";
 	*network_learning_rate = initial_learning_rate;
 	bs_loader.load_best_state();
 
@@ -253,16 +249,16 @@ void NeuralNetwork::train_network(double** normalized_batch_input_features, doub
 void NeuralNetwork::backpropagate_derived_values(double* target_values)
 {
 	for (int s = 0; s < batch_size; s++)
-		(*(output_layer->get_layer_linear_transform_derived_values()))[s] =
-		output_layer->get_training_layer_activation_arrays()[s][0] - target_values[s];
+		output_layer->get_linear_transform_derived_values()[0][s] =
+		output_layer->get_training_activation_arrays()[s][0] - target_values[s];
 
 	// backpropagate the derived values alongside associated weights in the next layer (l + 1) given a layer (l)
-	hidden_layers[number_of_hidden_layers - 1]->calculate_derived_values(output_layer->get_layer_linear_transform_derived_values(),
+	hidden_layers[number_of_hidden_layers - 1]->calculate_derived_values(output_layer->get_linear_transform_derived_values(),
 		output_layer->get_layer_weights(), 1);
 
 	// continue backpropagating
 	for (int l = number_of_hidden_layers - 1; l > 0; l--)
-		hidden_layers[l - 1]->calculate_derived_values(hidden_layers[l]->get_layer_linear_transform_derived_values(),
+		hidden_layers[l - 1]->calculate_derived_values(hidden_layers[l]->get_linear_transform_derived_values(),
 			hidden_layers[l]->get_layer_weights(), number_of_neurons_each_hidden_layer[l]);
 }
 
@@ -281,7 +277,7 @@ void NeuralNetwork::calculate_training_predictions(double** normalized_input_fea
 	// copy the normalized input features into the first layer's training input arrays
 	for (int s = 0; s < batch_size; s++)
 		for (int f = 0; f < network_number_of_features; f++)
-			hidden_layers[0]->get_training_layer_input_features()[s][f] = normalized_input_features[s][f];
+			hidden_layers[0]->get_training_input_features()[s][f] = normalized_input_features[s][f];
 
 	// for each layer, compute their training activation arrays
 	for (int l = 0; l < number_of_hidden_layers; l++)
@@ -327,9 +323,10 @@ int* NeuralNetwork::select_random_batch_indices(int number_of_samples, int lower
 // return a value based on the current weights and biases as well as the input features
 double NeuralNetwork::calculate_prediction(double* normalized_input_features)
 {	
-	// copy the normalized input features into the first layer's input array
-	for (int f = 0; f < network_number_of_features; f++)
-		hidden_layers[0]->get_layer_input_features()[f] = normalized_input_features[f];
+	for (int n = 0; n < number_of_neurons_each_hidden_layer[0]; n++)
+		// copy the normalized input features into the first layer's input array
+		for (int f = 0; f < network_number_of_features; f++)
+			hidden_layers[0]->get_input_features()[f] = normalized_input_features[f];
 
 	// for each layer, have each compute their activation arrays
 	for (int l = 0; l < number_of_hidden_layers; l++)
@@ -338,7 +335,7 @@ double NeuralNetwork::calculate_prediction(double* normalized_input_features)
 	// output layer will calculate a singular value and return that value as the result
 	output_layer->compute_activation_array();
 
-	return *(output_layer->get_layer_activation_array());
+	return *(output_layer->get_activation_array());
 }
 
 // get a dynamically allocated array that will store the number of neurons each hidden layer so best state loader 
@@ -368,29 +365,33 @@ void NeuralNetwork::set_learning_rate(double l_rate)
 
 
 // initialize with the network's parameters
-NeuralNetwork::BestStateLoader::BestStateLoader(double*** network_weights, double** network_biases, double** network_means_and_variances,
-	double** network_scales_and_shifts, const int* number_of_neurons_each_hidden_layer, int number_of_hidden_layers,
-	int net_number_of_neurons_in_hidden_layers, int network_number_of_features) :
-	current_weights(network_weights), current_biases(network_biases), current_means_and_variances(network_means_and_variances),
-	current_scales_and_shifts(network_scales_and_shifts), number_of_neurons_each_hidden_layer(number_of_neurons_each_hidden_layer),
-	number_of_hidden_layers(number_of_hidden_layers), net_number_of_neurons_in_hidden_layers(net_number_of_neurons_in_hidden_layers),
-	number_of_features(network_number_of_features),
+NeuralNetwork::BestStateLoader::BestStateLoader(double*** network_weights, double** network_biases, double* network_running_means,
+	double* network_running_variances, double* network_scales, double* network_shifts, const int* number_of_neurons_each_hidden_layer, 
+	int number_of_hidden_layers, int net_number_of_neurons_in_hidden_layers, int network_number_of_features) :
+	
+	current_weights(network_weights), current_biases(network_biases), current_running_means(network_running_means), 
+	current_running_variances(network_running_variances), current_scales(network_scales), current_shifts(network_shifts), 
+	number_of_neurons_each_hidden_layer(number_of_neurons_each_hidden_layer), number_of_hidden_layers(number_of_hidden_layers), 
+	net_number_of_neurons_in_hidden_layers(net_number_of_neurons_in_hidden_layers), number_of_features(network_number_of_features),
 
 	// allocate memory to the best pointers
 	best_weights(allocate_memory_for_weights(number_of_neurons_each_hidden_layer, number_of_hidden_layers, number_of_features)),
 	best_biases(allocate_memory_for_biases(number_of_neurons_each_hidden_layer, number_of_hidden_layers)),
-	best_means_and_variances(allocate_memory_for_mv_or_ss(net_number_of_neurons_in_hidden_layers)),
-	best_scales_and_shifts(allocate_memory_for_mv_or_ss(net_number_of_neurons_in_hidden_layers))
+	best_running_means(new double[net_number_of_neurons_in_hidden_layers]), 
+	best_running_variances(new double[net_number_of_neurons_in_hidden_layers]),
+	best_scales(new double[net_number_of_neurons_in_hidden_layers]),
+	best_shifts(new double[net_number_of_neurons_in_hidden_layers])
 { }
 
-// deallocate all the best pointers
+// delete all the dynamically allocated objects that are part of the bs loader
 NeuralNetwork::BestStateLoader::~BestStateLoader()
 {
-	delete[] number_of_neurons_each_hidden_layer;
 	deallocate_memory_for_weights(best_weights, number_of_neurons_each_hidden_layer, number_of_hidden_layers);
 	deallocate_memory_for_biases(best_biases, number_of_hidden_layers);
-	deallocate_memory_for_mv_or_ss(best_means_and_variances, net_number_of_neurons_in_hidden_layers);
-	deallocate_memory_for_mv_or_ss(best_scales_and_shifts, net_number_of_neurons_in_hidden_layers);
+	delete[] best_running_means;
+	delete[] best_running_variances;
+	delete[] best_scales;
+	delete[] best_shifts;
 }
 
 // update the best state to the current state of the neural network
@@ -440,16 +441,20 @@ void NeuralNetwork::BestStateLoader::write_to_best_biases()
 void NeuralNetwork::BestStateLoader::write_to_best_means_and_variances()
 {
 	for (int n = 0; n < net_number_of_neurons_in_hidden_layers; n++)
-		for (int f = 0; f < 2; f++)
-			best_means_and_variances[n][f] = current_means_and_variances[n][f];
+	{
+		best_running_means[n] = current_running_means[n];
+		best_running_variances[n] = current_running_variances[n];
+	}
 }
 
 // copy the values of the current scales and shifts to the scales and shifts pointer
 void NeuralNetwork::BestStateLoader::write_to_best_scales_and_shifts()
 {
 	for (int n = 0; n < net_number_of_neurons_in_hidden_layers; n++)
-		for (int f = 0; f < 2; f++)
-			best_scales_and_shifts[n][f] = current_scales_and_shifts[n][f];
+	{
+		best_scales[n] = current_scales[n];
+		best_shifts[n] = current_shifts[n];
+	}
 }
 
 // update the current state of the neural network to the best state
@@ -472,7 +477,7 @@ void NeuralNetwork::BestStateLoader::write_to_current_weights()
 		for (int f = 0; f < number_of_features; f++)
 			current_weights[0][n][f] = best_weights[0][n][f];
 
-	// copy each hidden layers' weights inot the best weights
+	// copy each hidden layers' weights into the best weights
 	for (int l = 1; l < number_of_hidden_layers; l++)
 		for (int n = 0; n < number_of_neurons_each_hidden_layer[l]; n++)
 			for (int f = 0; f < number_of_neurons_each_hidden_layer[l - 1]; f++)
@@ -499,14 +504,18 @@ void NeuralNetwork::BestStateLoader::write_to_current_biases()
 void NeuralNetwork::BestStateLoader::write_to_current_means_and_variances()
 {
 	for (int n = 0; n < net_number_of_neurons_in_hidden_layers; n++)
-		for (int f = 0; f < 2; f++)
-			current_means_and_variances[n][f] = best_means_and_variances[n][f];
+	{
+		current_running_means[n] = best_running_means[n];
+		current_running_variances[n] = best_running_variances[n];
+	}
 }
 
 // copy the values of the best scales and shifts into the current scales and shifts
 void NeuralNetwork::BestStateLoader::write_to_current_scales_and_shifts()
 {
 	for (int n = 0; n < net_number_of_neurons_in_hidden_layers; n++)
-		for (int f = 0; f < 2; f++)
-			current_scales_and_shifts[n][f] = best_scales_and_shifts[n][f];
+	{
+		current_scales[n] = best_scales[n];
+		current_shifts[n] = best_shifts[n];
+	}
 }

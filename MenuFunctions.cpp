@@ -79,13 +79,13 @@ void update_weights_and_biases_file(std::string weights_and_biases_file_name, do
 }
 
 // update the means and variances OR the scales and shifts file with the current local configs within the program
-void update_mv_or_ss_file(std::string mv_or_ss_file_name, double** mv_or_ss, int net_number_of_neurons)
+void update_mv_or_ss_file(std::string mv_or_ss_file_name, double* means_or_scales, double* variances_or_shifts, int net_number_of_neurons_in_hidden_layers)
 {
 	std::fstream mv_or_ss_file(mv_or_ss_file_name, std::ios::out | std::ios::trunc);
 
 	// means and variances & scales and shifts will always only have two features, lest the program doesn't work
-	for (int n = 0; n < net_number_of_neurons; n++)
-		mv_or_ss_file << mv_or_ss[n][0] << "," << mv_or_ss[n][1] << "\n";
+	for (int n = 0; n < net_number_of_neurons_in_hidden_layers; n++)
+		mv_or_ss_file << means_or_scales[n] << "," << variances_or_shifts[n] << "\n";
 
 	mv_or_ss_file.close();
 }

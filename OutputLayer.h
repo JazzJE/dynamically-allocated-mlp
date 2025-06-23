@@ -1,6 +1,5 @@
 #pragma once
 #include "DenseLayer.h"
-#include "OutputNeuron.h"
 #include <iostream>
 // the output layer will functionally have the same attributes as the normal layer; the only difference will be in the methods, 
 // which are optimized for just one (output) neuron
@@ -18,5 +17,11 @@ public:
 	// no for loops; just a single value
 	void compute_activation_array();
 	void training_compute_activation_arrays();
+	void training_linear_transform();
+	void update_parameters();
+
+	// getter/accessor methods for output layer
+	double** get_training_activation_arrays() const;
+	double* get_activation_array() const;
 };
 

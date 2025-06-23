@@ -12,18 +12,18 @@ class NeuralNetwork
 private:
 
 	// used for deleting network and training
-	const int net_number_of_neurons;
+	const int net_number_of_neurons_in_hidden_layers;
 
 	const int network_number_of_features;
 	const int batch_size;
+
+	double* const network_learning_rate;
+	double* const network_regularization_rate;
 
 	const int* number_of_neurons_each_hidden_layer;
 	const int number_of_hidden_layers;
 	DenseLayer** const hidden_layers;
 	OutputLayer* const output_layer;
-
-	double* const network_regularization_rate;
-	double* const network_learning_rate;
 
 	double*** const network_weights;
 	double** const network_biases;
@@ -42,7 +42,7 @@ private:
 		// use these to interact with the pointers
 		const int* number_of_neurons_each_hidden_layer;
 		const int number_of_hidden_layers;
-		const int net_number_of_neurons;
+		const int net_number_of_neurons_in_hidden_layers;
 		const int number_of_features;
 
 		// store pointers to the best states
@@ -52,13 +52,13 @@ private:
 		double** const best_scales_and_shifts;
 
 		BestStateLoader(double*** network_weights, double** network_biases, double** network_means_and_variances, double** scales_and_shifts,
-			const int* number_of_neurons_each_hidden_layer, int number_of_hidden_layers, int net_number_of_neurons,
+			const int* number_of_neurons_each_hidden_layer, int number_of_hidden_layers, int net_number_of_neurons_in_hidden_layers,
 			int network_number_of_features);
 
 		~BestStateLoader();
 
 		// methods to save the best state
-		void save_best_state();
+		void save_current_state();
 		void write_to_best_weights();
 		void write_to_best_biases();
 		void write_to_best_means_and_variances();
@@ -72,14 +72,21 @@ private:
 		void write_to_current_scales_and_shifts();
 	};
 
-	void mini_batch_descent(BestStateLoader& bs_loader, double** training_features_normalized, double* target_values,
+	// training components
+	void early_stop_training(BestStateLoader& bs_loader, double** training_features_normalized, double* target_values,
 		int lower_cross_validation_index, int higher_cross_validation_index, int number_of_samples);
+
+	void train_network(double** normalized_batch_input_features, double* target_values);
+	int* select_random_batch_indices(int number_of_samples, int lower_validation_index = -1, int higher_validation_index = -1); // select random batch samples for training
+	void calculate_training_predictions(double** normalized_batch_input_features); // compute the predictions of all the samples; need to do this so we can have the input features of each layer and can thus apply gradient descent
+	void backpropagate_derived_values(double* target_values);
+	void update_parameters();
 
 public:
 
 	// initialize all the variables
 	NeuralNetwork(double*** weights, double** biases, double** means_and_variances, double** scales_and_shifts, 
-		const int* number_of_neurons_each_hidden_layer, int net_number_of_neurons, int number_of_hidden_layers, 
+		const int* number_of_neurons_each_hidden_layer, int net_number_of_neurons_in_hidden_layers, int number_of_hidden_layers, 
 		int number_of_features, int batch_size, double learning_rate, double regularization_rate);
 
 	// destructor to delete neural network
@@ -91,8 +98,9 @@ public:
 	// calculate a value based on the current weights and biases as well as the input features
 	double calculate_prediction(double* input_features);
 
-	// calculate the training predictions of each sample and return a dynamically allocated array to it
-	double* calculate_training_predictions(double** normalized_input_features);
+	// get the number of neurons in each hidden layer and turn it into a dynamic array so that the best state loader
+	// can access it
+	int* get_number_of_neurons_each_hidden_layer();
 
 	// mutator/setter methods for rates
 	void set_regularization_rate(double r_rate);

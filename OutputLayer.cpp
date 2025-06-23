@@ -1,15 +1,18 @@
 #include "OutputLayer.h"
-OutputLayer::OutputLayer(double** layer_weights, double* layer_biases, double** layer_means_and_variances, double** layer_scales_and_shifts,
-	double** training_layer_activation_arrays, double* layer_activation_array, int batch_size, int number_of_features,
-	int number_of_neurons, double* regularization_rate, double* learning_rate) : DenseLayer(layer_weights, layer_biases, 
-		layer_means_and_variances, layer_scales_and_shifts, training_layer_activation_arrays, layer_activation_array, 
-		batch_size, number_of_features, number_of_neurons, regularization_rate, learning_rate)
+OutputLayer::OutputLayer(double** layer_weights, double* layer_biases,
+	double** training_layer_activation_arrays, double* layer_activation_array, int batch_size, 
+	int number_of_features, int number_of_neurons, double* layer_learning_rate, double* layer_regularization_rate) :
+
+	DenseLayer(layer_weights, layer_biases, nullptr, nullptr, training_layer_activation_arrays, 
+		layer_activation_array, batch_size, number_of_features, number_of_neurons, layer_learning_rate, layer_regularization_rate)
 { 
-	// instead of creating a neuron object within the neurons, create a singular neuron of the "OutputNeuron" class
-	delete* neurons;
-	*neurons = new OutputNeuron(layer_weights[0], &layer_biases[0], layer_means_and_variances[0], layer_scales_and_shifts[0],
-		training_layer_input_features, training_layer_activation_arrays, layer_input_features, layer_activation_array,
-		number_of_features, batch_size, 0);
+	neurons[0] = new OutputNeuron(layer_weights[0], &layer_biases[0], training_layer_input_features, training_layer_activation_arrays,
+		layer_input_features, layer_activation_array, layer_linear_transform_derived_values[0], number_of_features, batch_size, 0,
+		layer_learning_rate, layer_regularization_rate);
+
+	// delete the scales and shifts & the linear transform arrays as we won't use them
+	deallocate_memory_for_training_features(layer_linear_transform_values, 1);
+	deallocate_memory_for_training_features(layer_affinal_transform_derived_values, 1);
 }
 
 // delete the output neuron array

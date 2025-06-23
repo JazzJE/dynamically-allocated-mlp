@@ -1,5 +1,2 @@
 ﻿  NeuralNetwork.cpp
-  main.cpp
-C:\Users\JedEs\Desktop\neural network\neural network\main.cpp(61,12): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
-  Generating Code...
   neural network.vcxproj -> C:\Users\JedEs\Desktop\neural network\x64\Debug\neural network.exe

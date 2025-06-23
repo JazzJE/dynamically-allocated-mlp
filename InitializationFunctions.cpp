@@ -229,38 +229,38 @@ bool check_line_weights_and_biases_file(std::fstream& weights_and_biases_file, i
 // running means and running variances for each neuron in normalization
 
 	// generate a file that will store the running means and running variances of each neuron
-void generate_means_and_vars_file(std::string means_and_vars_file_name, int net_number_of_neurons)
+void generate_means_and_vars_file(std::string means_and_vars_file_name, int net_number_of_neurons_in_hidden_layers)
 {
 	std::fstream means_and_vars_file(means_and_vars_file_name, std::ios::out | std::ios::trunc);
 
 	// each mean will be initialized to 0, and each variance will be initialize to 1
-	for (int n = 0; n < net_number_of_neurons; n++)
+	for (int n = 0; n < net_number_of_neurons_in_hidden_layers; n++)
 		means_and_vars_file << 0 << "," << 1 << "\n";
 
 	means_and_vars_file.close();
 }
 
 	// generate a file that will store the shifts and scales of each neuron
-void generate_scales_and_shifts_file(std::string scales_and_shifts_file_name, int net_number_of_neurons)
+void generate_scales_and_shifts_file(std::string scales_and_shifts_file_name, int net_number_of_neurons_in_hidden_layers)
 {
 	std::fstream scales_and_shifts_file(scales_and_shifts_file_name, std::ios::out | std::ios::trunc);
 
 	// each mean will be initialized to 0, and each variance will be initialize to 1
-	for (int n = 0; n < net_number_of_neurons; n++)
+	for (int n = 0; n < net_number_of_neurons_in_hidden_layers; n++)
 		scales_and_shifts_file << 1 << "," << 0 << "\n";
 
 	scales_and_shifts_file.close();
 }
 
 	// verify the means and var file, and return -1 if no error was detected
-void validate_mv_or_ss_file(std::fstream& mv_or_ss_file, std::string mv_or_ss_file_name, int net_number_of_neurons)
+void validate_mv_or_ss_file(std::fstream& mv_or_ss_file, std::string mv_or_ss_file_name, int net_number_of_neurons_in_hidden_layers)
 {
-	int line_error = find_error_mv_or_ss_file(mv_or_ss_file, net_number_of_neurons);
+	int line_error = find_error_mv_or_ss_file(mv_or_ss_file, net_number_of_neurons_in_hidden_layers);
 	if (line_error != -1)
 	{
 		char option;
 
-		std::cout << "\n[ERROR] There seems to be a type casting error, too many fields, or a negative number in the " << mv_or_ss_file_name
+		std::cout << "\n[ERROR] There seems to be a type casting error or too many fields in " << mv_or_ss_file_name
 			<< "\n\n\t***The error was found on line " << line_error << " in " << mv_or_ss_file_name << " ***"
 			<< "\n\nWould you like to generate a new " << mv_or_ss_file_name << " file? This is effective to ONLY resetting this part of "
 			<< "your neural network, but it is recommended to simply fix the error manually (Y / N) : ";
@@ -276,15 +276,15 @@ void validate_mv_or_ss_file(std::fstream& mv_or_ss_file, std::string mv_or_ss_fi
 		{
 			mv_or_ss_file.close();
 
-			if (mv_or_ss_file_name == "means_and_variances.csv")
+			if (mv_or_ss_file_name == "means_and_vars.csv")
 			{
 				std::cout << "\nGenerating new running means and running variances file...\n\n";
-				generate_means_and_vars_file(mv_or_ss_file_name, net_number_of_neurons);
+				generate_means_and_vars_file(mv_or_ss_file_name, net_number_of_neurons_in_hidden_layers);
 			}
-			else
+			else if (mv_or_ss_file_name == "scales_and_shifts.csv")
 			{
 				std::cout << "\nGenerating new scales and shifts file...\n\n";
-				generate_scales_and_shifts_file(mv_or_ss_file_name, net_number_of_neurons);
+				generate_scales_and_shifts_file(mv_or_ss_file_name, net_number_of_neurons_in_hidden_layers);
 			}
 
 			mv_or_ss_file.open(mv_or_ss_file_name, std::ios::in);
@@ -298,15 +298,15 @@ void validate_mv_or_ss_file(std::fstream& mv_or_ss_file, std::string mv_or_ss_fi
 }
 
 	// find if there is an error in ema file, where if there isn't then return -1
-int find_error_mv_or_ss_file(std::fstream& mv_or_ss_file, int net_number_of_neurons)
+int find_error_mv_or_ss_file(std::fstream& mv_or_ss_file, int net_number_of_neurons_in_hidden_layers)
 {
 	int field_count, line_error = 0;
 	double temp_double;
 	std::string line, value;
 	std::stringstream ss, converter;
 	
-	// just go through each of the values, making sure they are doubles, there are only two values each row, and they are not negatives
-	for (int n = 0; n < net_number_of_neurons; n++)
+	// just go through each of the values, making sure they are doubles and there are only two values each row
+	for (int n = 0; n < net_number_of_neurons_in_hidden_layers; n++)
 	{
 		line_error++;
 
@@ -325,9 +325,7 @@ int find_error_mv_or_ss_file(std::fstream& mv_or_ss_file, int net_number_of_neur
 			if (converter.fail() || !converter.eof())
 				return line_error;
 
-			// check if the value is a negative number
-			if (temp_double < 0) return line_error;
-
+			// count the number of columns there are
 			field_count++;
 		}
 
@@ -343,11 +341,11 @@ int find_error_mv_or_ss_file(std::fstream& mv_or_ss_file, int net_number_of_neur
 }
 
 	// parse the running means and variances OR shifts and scales file
-void parse_mv_or_ss_file(std::fstream& mv_or_ss_file, double** mv_or_ss, int net_number_of_neurons)
+void parse_mv_or_ss_file(std::fstream& mv_or_ss_file, double** mv_or_ss, int net_number_of_neurons_in_hidden_layers)
 {
 	std::string line, value;
 	std::stringstream ss;
-	for (int n = 0; n < net_number_of_neurons; n++)
+	for (int n = 0; n < net_number_of_neurons_in_hidden_layers; n++)
 	{
 		getline(mv_or_ss_file, line);
 

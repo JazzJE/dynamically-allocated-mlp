@@ -29,17 +29,17 @@ bool check_line_weights_and_biases_file(std::fstream& weights_and_biases_file, i
 // methods for saving and generating running means and running variances, and generating the shifts and scales of each neuron
 
 	// generating exponential moving averages
-void generate_means_and_vars_file(std::string means_and_vars_file_name, int net_number_of_neurons);
+void generate_means_and_vars_file(std::string means_and_vars_file_name, int net_number_of_neurons_in_hidden_layers);
 
 	// generating shifts and scales
-void generate_scales_and_shifts_file(std::string scales_and_shifts_file_name, int net_number_of_neurons);
+void generate_scales_and_shifts_file(std::string scales_and_shifts_file_name, int net_number_of_neurons_in_hidden_layers);
 
 	// verifying means and variances file OR shifts and scales file
-void validate_mv_or_ss_file(std::fstream& mv_or_ss_file, std::string means_and_vars_file_name, int net_number_of_neurons);
-int find_error_mv_or_ss_file(std::fstream& mv_or_ss_file, int net_number_of_neurons);
+void validate_mv_or_ss_file(std::fstream& mv_or_ss_file, std::string means_and_vars_file_name, int net_number_of_neurons_in_hidden_layers);
+int find_error_mv_or_ss_file(std::fstream& mv_or_ss_file, int net_number_of_neurons_in_hidden_layers);
 
 	// parse the running means and variances OR shifts and scales file
-void parse_mv_or_ss_file(std::fstream& mv_or_ss_file, double** mv_or_ss, int net_number_of_neurons);
+void parse_mv_or_ss_file(std::fstream& mv_or_ss_file, double** mv_or_ss, int net_number_of_neurons_in_hidden_layers);
 
 // dataset file methods
 

@@ -66,14 +66,14 @@ double** allocate_memory_for_training_features(int number_of_samples, int number
 }
 
 // allocate memory for means and variances OR shifts and scales
-double** allocate_memory_for_mv_or_ss(int net_number_of_neurons)
+double** allocate_memory_for_mv_or_ss(int net_number_of_neurons_in_hidden_layers)
 {
-	double** mv_or_ss = new double* [net_number_of_neurons];
+	double** mv_or_ss = new double* [net_number_of_neurons_in_hidden_layers];
 
 	// each array will store either the...
 		// 1. running mean, 2. running variances OR
 		// 1. shift, 2. scale
-	for (int n = 0; n < net_number_of_neurons; n++)
+	for (int n = 0; n < net_number_of_neurons_in_hidden_layers; n++)
 		mv_or_ss[n] = new double[2];
 
 	return mv_or_ss;
@@ -127,9 +127,9 @@ void deallocate_memory_for_training_features(double** training_features, int num
 }
 
 // deallocate memory for means and variances OR shifts and scales
-void deallocate_memory_for_mv_or_ss(double** mv_or_ss, int net_number_of_neurons)
+void deallocate_memory_for_mv_or_ss(double** mv_or_ss, int net_number_of_neurons_in_hidden_layers)
 {
-	for (int n = 0; n < net_number_of_neurons; n++)
+	for (int n = 0; n < net_number_of_neurons_in_hidden_layers; n++)
 		delete[] mv_or_ss[n];
 
 	delete[] mv_or_ss;

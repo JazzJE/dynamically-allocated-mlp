@@ -48,13 +48,26 @@ int main()
 		// the second hidden layer will have 10 neurons
 		// the third hidden layer will have 3 neurons
 		// the fourth/output layer will have 1 neuron, predicting the value
-	const int number_of_neurons_each_hidden_layer[] = { 7, 10, 3 };
+	const int number_of_neurons_each_hidden_layer[] = { 1000, 500, 250 };
 
 	// some initialization parameters; leave these alone if you don't know how they work
-	const int batch_size = 64;
+	const int batch_size = 128;
 
 	// PAST THIS POINT IS ALL THE HARD CODE; REFER TO ABOVE PARTS FOR EDITABLE COMPONENTS
 	
+
+	// check if there is a negative number or zero in the number of neurons each hidden layer array
+	int number_of_hidden_layers = sizeof(number_of_neurons_each_hidden_layer) / sizeof(int);
+	for (int i = 0; i < number_of_hidden_layers; i++)
+	{
+		if (number_of_neurons_each_hidden_layer[i] <= 0)
+		{
+			std::cout << "Before using this program, please ensure that there are no zero or negative values in the "
+				<< "\"number_of_neurons_each_hidden_layer\" array";
+			exit(0);
+		}
+	}
+
 	std::cout << "The program may take a couple of seconds to load...\n" << std::fixed;
 
 	// initialize new seed
@@ -75,7 +88,6 @@ int main()
 	// calculate number of samples, features, and number of hidden layers
 	int number_of_samples = count_number_of_samples(dataset_file);
 	int number_of_features = count_number_of_features(dataset_file);
-	int number_of_hidden_layers = sizeof(number_of_neurons_each_hidden_layer) / sizeof(int);
 
 	if (number_of_hidden_layers == 0)
 	{
@@ -101,11 +113,11 @@ int main()
 	for (int s = 0; s < number_of_shuffles; s++)
 		randomize_training_samples(training_features, target_values, number_of_samples);
 
-	// calculate the means and standard deviations of all the features and normalize them
+	// calculate the means and variances of all the features and normalize them
 	double* all_samples_means = calculate_features_means(training_features, number_of_features, number_of_samples);
-	double* all_samples_stddevs = calculate_features_stddevs(training_features, all_samples_means, number_of_features, number_of_samples);
+	double* all_samples_variances = calculate_features_variances(training_features, all_samples_means, number_of_features, number_of_samples);
 	double** all_samples_normalized_features = calculate_normalized_features(training_features, number_of_samples, 
-		number_of_features, all_samples_means, all_samples_stddevs);
+		number_of_features, all_samples_means, all_samples_variances);
 
 	// close dataset file when done
 	dataset_file.close();
@@ -150,12 +162,11 @@ int main()
 	std::string means_and_vars_file_name = "means_and_vars.csv";
 	std::fstream means_and_vars_file(means_and_vars_file_name, std::ios::in);
 
-	// calculate the net number of neurons in the entire network
-	int net_number_of_neurons = 0;
+	// calculate the net number of neurons in all the hidden layers
+	// this will be used for assigning means and variances & scales and shifts
+	int net_number_of_neurons_in_hidden_layers = 0;
 	for (int l = 0; l < number_of_hidden_layers; l++)
-		net_number_of_neurons += number_of_neurons_each_hidden_layer[l];
-	// output layer will represent one extra neuron
-	net_number_of_neurons++;
+		net_number_of_neurons_in_hidden_layers += number_of_neurons_each_hidden_layer[l];
 
 	// if the running means and running variances file doesn't exist, generate a new one
 	if (!means_and_vars_file)
@@ -163,19 +174,19 @@ int main()
 		std::cout << "Running means and running variances file not found; creating new one...\n\n";
 		means_and_vars_file.close();
 
-		generate_means_and_vars_file(means_and_vars_file_name, net_number_of_neurons);
+		generate_means_and_vars_file(means_and_vars_file_name, net_number_of_neurons_in_hidden_layers);
 
 		means_and_vars_file.open(means_and_vars_file_name, std::ios::in);
 	}
 
 	// validate each line has only 2 fields, no negatives, and no strings
-	validate_mv_or_ss_file(means_and_vars_file, means_and_vars_file_name, net_number_of_neurons);
+	validate_mv_or_ss_file(means_and_vars_file, means_and_vars_file_name, net_number_of_neurons_in_hidden_layers);
 
 	// allocate memory for means and variances
-	double** const means_and_variances = allocate_memory_for_mv_or_ss(net_number_of_neurons);
+	double** means_and_variances = allocate_memory_for_mv_or_ss(net_number_of_neurons_in_hidden_layers);
 
 	// parse the means and variances
-	parse_mv_or_ss_file(means_and_vars_file, means_and_variances, net_number_of_neurons);
+	parse_mv_or_ss_file(means_and_vars_file, means_and_variances, net_number_of_neurons_in_hidden_layers);
 
 	// close the file
 	means_and_vars_file.close();
@@ -191,19 +202,19 @@ int main()
 		std::cout << "Scales and shifts file not found; creating new one...\n\n";
 		scales_and_shifts_file.close();
 
-		generate_scales_and_shifts_file(scales_and_shifts_file_name, net_number_of_neurons);
+		generate_scales_and_shifts_file(scales_and_shifts_file_name, net_number_of_neurons_in_hidden_layers);
 
 		scales_and_shifts_file.open(scales_and_shifts_file_name, std::ios::in);
 	}
 
 	// validate each line has only 2 fields, no negatives, and no strings
-	validate_mv_or_ss_file(scales_and_shifts_file, scales_and_shifts_file_name, net_number_of_neurons);
+	validate_mv_or_ss_file(scales_and_shifts_file, scales_and_shifts_file_name, net_number_of_neurons_in_hidden_layers);
 
 	// allocate memory for scales and shifts
-	double** const scales_and_shifts = allocate_memory_for_mv_or_ss(net_number_of_neurons);
+	double** scales_and_shifts = allocate_memory_for_mv_or_ss(net_number_of_neurons_in_hidden_layers);
 
 	// parse the scales and shifts
-	parse_mv_or_ss_file(scales_and_shifts_file, scales_and_shifts, net_number_of_neurons);
+	parse_mv_or_ss_file(scales_and_shifts_file, scales_and_shifts, net_number_of_neurons_in_hidden_layers);
 
 	// close the file
 	scales_and_shifts_file.close();
@@ -223,28 +234,29 @@ int main()
 
 	// create the neural network
 	NeuralNetwork neural_network(weights, biases, means_and_variances, scales_and_shifts, number_of_neurons_each_hidden_layer, 
-		net_number_of_neurons, number_of_hidden_layers, number_of_features, batch_size, learning_rate, regularization_rate);
+		net_number_of_neurons_in_hidden_layers, number_of_hidden_layers, number_of_features, batch_size, learning_rate, regularization_rate);
 
 	while (true)
 	{
 		std::cout << "\nOption Menu:"
 			<< "\n\t1. Train neural network (five-fold, mini-batch gradient descent)"
-			<< "\n\t2. Predict a value"
-			<< "\n\t3. Save your current neural network configs (update all files to latest version in this program)"
-			<< "\n\t4. Change learning and regularization parameters"
-			<< "\n\t5. Exit program (exiting will not save the network)"
+			<< "\n\t2. Randomize order of training samples"
+			<< "\n\t3. Predict a value"
+			<< "\n\t4. Save your current neural network configs (update all files to latest version in this program)"
+			<< "\n\t5. Change learning and regularization parameters"
+			<< "\n\t6. Exit program (exiting will not save the network)"
 			<< "\nPlease select an option: ";
 		std::cin >> option;
 
 		// input validation
-		while (option < '1' || option > '5')
+		while (option < '1' || option > '6')
 		{
-			std::cout << "[ERROR] Please enter a valid input (1-5): ";
+			std::cout << "[ERROR] Please enter a valid input (1-6): ";
 			std::cin >> option;
 		}
 
 		// end the program if selected
-		if (option == '5') break;
+		if (option == '6') break;
 
 		generate_border_line();
 
@@ -258,7 +270,14 @@ int main()
 
 			break; // end case
 
-		case '2': // predict a value
+		case '2': // randomize order of training samples again
+
+			std::cout << "\n\tRandomizing samples' order...";
+			for (int s = 0; s < number_of_shuffles; s++)
+				randomize_training_samples(training_features, target_values, number_of_samples);
+			std::cout << "\n\tDone!";
+
+		case '3': // predict a value
 
 		{
 			int random_index = std::rand() % number_of_samples;
@@ -268,7 +287,9 @@ int main()
 
 			std::cout << "\n\nActual value of " << target_name << ": " << target_values[random_index];
 
-			double* normalized_features = calculate_normalized_features(training_features[random_index], number_of_features, all_samples_means, all_samples_stddevs);
+			double* normalized_features = calculate_normalized_features(training_features[random_index], number_of_features, 
+				all_samples_means, all_samples_variances);
+
 			std::cout << "\n\nNormalized features: ";
 			for (int f = 0; f < number_of_features; f++)
 				std::cout << normalized_features[f] << " ";
@@ -277,16 +298,16 @@ int main()
 			break; // end case
 		}
 
-		case '3': // save current neural network
+		case '4': // save current neural network
 
 			update_weights_and_biases_file(weights_and_biases_file_name, weights, biases, 
 				number_of_neurons_each_hidden_layer, number_of_hidden_layers, number_of_features);
-			update_mv_or_ss_file(means_and_vars_file_name, means_and_variances, net_number_of_neurons);
-			update_mv_or_ss_file(scales_and_shifts_file_name, scales_and_shifts, net_number_of_neurons);
+			update_mv_or_ss_file(means_and_vars_file_name, means_and_variances, net_number_of_neurons_in_hidden_layers);
+			update_mv_or_ss_file(scales_and_shifts_file_name, scales_and_shifts, net_number_of_neurons_in_hidden_layers);
 
 			break; // end case
 
-		case '4': // change learning and regularization parameters
+		case '5': // change learning and regularization parameters
 
 			input_parameter_rates(learning_rate, regularization_rate);
 			neural_network.set_learning_rate(learning_rate);

@@ -4,6 +4,7 @@
 #include <iomanip>
 #include <limits>
 
+double* input_new_features(std::string* feature_names, bool* not_normalize, int number_of_features);
 void input_parameter_rates(double& learning_rate, double& regularization_rate);
 void generate_border_line();
 void update_weights_and_biases_file(std::string weights_and_biases_file_name, double*** weights, double** biases, 

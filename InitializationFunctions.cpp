@@ -6,6 +6,76 @@
 #include <random>
 #include <string>
 
+// validating the neural network files
+void validate_neural_network_files(const int* number_of_neurons_each_hidden_layer, int number_of_hidden_layers, int number_of_features,
+	int net_number_of_neurons_in_hidden_layers, std::string weights_and_biases_file_name, std::string means_and_vars_file_name, 
+	std::string scales_and_shifts_file_name)
+{
+	std::fstream weights_and_biases_file(weights_and_biases_file_name, std::ios::in);
+
+	// if the weight file was not opened (therefore doesn't exist), initialize a new one using He initialization
+	if (!weights_and_biases_file)
+	{
+		std::cout << "Weights and biases file not found; creating new one...";
+		weights_and_biases_file.close();
+
+		// create a new weight file
+		generate_weights_and_biases_file(weights_and_biases_file_name, number_of_neurons_each_hidden_layer,
+			number_of_hidden_layers, number_of_features);
+
+		weights_and_biases_file.open(weights_and_biases_file_name, std::ios::in);
+	}
+
+	// ensure that the weights and biases file has the appropriate weights and biases for each layer, else prompt the user 
+	// to make a new file
+	validate_weights_and_biases_file(weights_and_biases_file, weights_and_biases_file_name, number_of_neurons_each_hidden_layer,
+		number_of_hidden_layers, number_of_features);
+
+	weights_and_biases_file.close();
+
+
+	// file will store the running means and running variances of each neuron
+	std::fstream means_and_vars_file(means_and_vars_file_name, std::ios::in);
+
+	// if the running means and running variances file doesn't exist, generate a new one
+	if (!means_and_vars_file)
+	{
+		std::cout << "Running means and running variances file not found; creating new one...\n\n";
+		means_and_vars_file.close();
+
+		generate_means_and_vars_file(means_and_vars_file_name, net_number_of_neurons_in_hidden_layers);
+
+		means_and_vars_file.open(means_and_vars_file_name, std::ios::in);
+	}
+
+	// validate each line has only 2 fields, no negatives, and no strings
+	validate_mv_or_ss_file(means_and_vars_file, means_and_vars_file_name, net_number_of_neurons_in_hidden_layers);
+
+	// close the file
+	means_and_vars_file.close();
+
+
+	// file will store affinal transformation parameters for each neuron
+	std::fstream scales_and_shifts_file(scales_and_shifts_file_name, std::ios::in);
+
+	// if the running means and running variances file doesn't exist, generate a new one
+	if (!scales_and_shifts_file)
+	{
+		std::cout << "Scales and shifts file not found; creating new one...\n\n";
+		scales_and_shifts_file.close();
+
+		generate_scales_and_shifts_file(scales_and_shifts_file_name, net_number_of_neurons_in_hidden_layers);
+
+		scales_and_shifts_file.open(scales_and_shifts_file_name, std::ios::in);
+	}
+
+	// validate each line has only 2 fields, no negatives, and no strings
+	validate_mv_or_ss_file(scales_and_shifts_file, scales_and_shifts_file_name, net_number_of_neurons_in_hidden_layers);
+
+	// close the file
+	scales_and_shifts_file.close();
+}
+
 // generating weights and biases file methods
 
 	// generate weight file if not already made
@@ -48,51 +118,6 @@ void generate_weights_and_biases_for_layer(std::fstream& weights_and_biases_file
 
 		// insert an initial bias value of 0 and then end the current neuron line
 		weights_and_biases_file << 0 << '\n';
-	}
-}
-
-	// parse the weights_and_biases file into an array
-void parse_weights_and_biases_file(std::fstream& weights_and_biases_file, double*** weights, double** biases,
-	const int* number_of_neurons_each_hidden_layer, int number_of_hidden_layers, int number_of_features)
-{
-	// parse weights and biases for first layer
-	parse_weights_and_biases_for_layer(weights_and_biases_file, number_of_features, 
-		number_of_neurons_each_hidden_layer[0], weights, biases, 0);
-
-	// parse the rest of the layers into the weights and biases array
-	for (int l = 1; l < number_of_hidden_layers; l++)
-		parse_weights_and_biases_for_layer(weights_and_biases_file, number_of_neurons_each_hidden_layer[l - 1],
-			number_of_neurons_each_hidden_layer[l], weights, biases, l);
-
-	// parse last layer into the weights and biases array
-	// remember that the number of hidden layers is equal to the index of the last layer
-	parse_weights_and_biases_for_layer(weights_and_biases_file, number_of_neurons_each_hidden_layer[number_of_hidden_layers - 1],
-		1, weights, biases, number_of_hidden_layers);
-}
-
-	// helper function to parse each neuron of a given layer
-void parse_weights_and_biases_for_layer(std::fstream& weights_and_biases_file, int number_of_features, int number_of_neurons, 
-	double*** weights, double** biases, int layer_index)
-{
-	std::string line, value;
-	std::stringstream ss;
-	
-	for (int n = 0; n < number_of_neurons; n++)
-	{
-		getline(weights_and_biases_file, line);
-
-		ss.clear();
-		ss.str(line);
-
-		for (int w = 0; w < number_of_features; w++)
-		{
-			getline(ss, value, ',');
-			weights[layer_index][n][w] = std::stod(value);
-		}
-
-		// last value will be bias value
-		getline(ss, value, '\n');
-		biases[layer_index][n] = std::stod(value);
 	}
 }
 
@@ -340,26 +365,6 @@ int find_error_mv_or_ss_file(std::fstream& mv_or_ss_file, int net_number_of_neur
 	return -1;
 }
 
-	// parse the running means and variances OR shifts and scales file
-void parse_mv_or_ss_file(std::fstream& mv_or_ss_file, double* means_or_scales, double* variances_or_shifts, int net_number_of_neurons_in_hidden_layers)
-{
-	std::string line, value;
-	std::stringstream ss;
-	for (int n = 0; n < net_number_of_neurons_in_hidden_layers; n++)
-	{
-		getline(mv_or_ss_file, line);
-
-		ss.clear();
-		ss.str(line);
-
-		getline(ss, value, ',');
-		means_or_scales[n] = std::stod(value);
-
-		getline(ss, value, '\n');
-		variances_or_shifts[n] = std::stod(value);
-	}
-}
-
 
 // dataset file methods
 
@@ -454,6 +459,7 @@ int find_error_dataset_file(std::fstream& dataset_file, int number_of_features)
 			// validate that the value being parsed is not a string or anamolous — there should only be double values
 			converter.clear();
 			converter.str(value);
+
 			converter >> temp_double;
 			if (converter.fail() || !converter.eof())
 				return line_error;
@@ -501,8 +507,10 @@ void randomize_training_samples(double** training_features, double* target_value
 }
 
 	// count the number of samples in the file
-int count_number_of_samples(std::fstream& dataset_file)
+int count_number_of_samples(std::string dataset_file_name)
 {
+	std::fstream dataset_file(dataset_file_name);
+
 	int counter = 0;
 	std::string line;
 
@@ -512,17 +520,17 @@ int count_number_of_samples(std::fstream& dataset_file)
 	while (getline(dataset_file, line))
 		counter++;
 
-	// reset to start
-	dataset_file.clear();
-	dataset_file.seekg(0);
+	dataset_file.close();
 
 	return counter;
 }
 
 	// count number of column titles, which is equal to number of features
 	// note that the number of features is equal to the number of fields taken in minus 1, given last column is training sample
-int count_number_of_features(std::fstream& dataset_file)
+int count_number_of_features(std::string dataset_file_name)
 {
+	std::fstream dataset_file(dataset_file_name);
+
 	int counter = 0;
 	std::string line, value;
 
@@ -532,9 +540,27 @@ int count_number_of_features(std::fstream& dataset_file)
 	while (getline(ss, value, ','))
 		counter++;
 
-	// reset to start
-	dataset_file.clear();
-	dataset_file.seekg(0);
+	dataset_file.close();
 
 	return (counter - 1);
+}
+
+// identify which column features are binary-valued given by if the string begins with a ~
+void identify_not_normalize_feature_columns(std::string* feature_names, bool* not_normalize, int number_of_features)
+{
+	for (int f = 0; f < number_of_features; f++)
+		if (feature_names[f][0] == '~')
+		{
+			not_normalize[f] = true;
+
+			// this is to update the name of the column to just whitespace if the column name is just the tilde by itself
+			if (feature_names[f].length() == 1)
+			{
+				feature_names[f] = " ";
+				continue;
+			}
+
+			// get rid of the tilde from the feature name
+			feature_names[f] = feature_names[f].substr(1, feature_names[f].length());
+		}
 }

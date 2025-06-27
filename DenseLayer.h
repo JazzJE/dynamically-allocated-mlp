@@ -1,6 +1,7 @@
 #pragma once
 #include "MemoryFunctions.h"
-#include <iostream>
+#include <cmath>
+#include <omp.h>
 class DenseLayer
 {
 protected:
@@ -32,7 +33,7 @@ protected:
 		// these are the derived values for the weights and biases
 	double** const linear_transform_derived_values;
 		// these are the derived values for the scales and shifts
-	double** const affinal_transform_derived_values;
+	double** const affine_transform_derived_values;
 	
 	// used for training computations
 	double** const layer_weights;
@@ -50,13 +51,13 @@ protected:
 	// for normal input features
 	void linear_transform();
 	void normalize_activation_value();
-	void affinal_transform();
+	void affine_transform();
 	void relu_activation_function();
 
 	// for training computations
 	void training_linear_transform();
 	void training_normalize_activation_value();
-	void training_affinal_transform();
+	void training_affine_transform();
 	void training_relu_activation_function();
 
 

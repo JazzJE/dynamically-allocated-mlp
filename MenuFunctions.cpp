@@ -4,42 +4,62 @@ void generate_border_line()
 	std::cout << '\n' << std::setw(32) << std::right << "----------------------\n";
 }
 
-void input_parameter_rates(double& learning_rate, double& regularization_rate)
+double* input_new_features(std::string* feature_names, bool* not_normalize, int number_of_features)
 {
-	// validate input for the learning rate
-	while (true)
-	{
-		std::cout << "\n\tPlease enter a double value for the new ***learning rate***: ";
-		std::cin >> learning_rate;
+	double* input_features = new double[number_of_features];
 
-		// if bad input detected, then warn user
-		if (std::cin.fail())
+	for (int f = 0; f < number_of_features; f++)
+	{
+		if (not_normalize[f])
+		{
+			std::cout << "\n\tEnter the value of the " << feature_names[f] << " as only a 0 or 1 (0 for false, 1 for true): ";
+
+			while (!(std::cin >> input_features[f]) || (input_features[f] != 0 && input_features[f] != 1))
+			{
+				std::cin.clear(); // clear error flags
+				std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // ignore the key buffer bad input
+				std::cout << "\t[ERROR] Please enter only a boolean value for " << feature_names[f] << "(0 for false, 1 for true): ";
+			}
+
+			std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // ignore any extra bad key buffer input
+
+			continue;
+		}
+
+		std::cout << "\n\tEnter the value of the " << feature_names[f] << ": ";
+		while (!(std::cin >> input_features[f]))
 		{
 			std::cin.clear(); // clear error flags
 			std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // ignore the key buffer bad input
-			std::cout << "\t[ERROR] Invalid input. Please do not enter characters or other anomalous characters for the new ***learning rate***.\n";
+			std::cout << "\t[ERROR] Please enter only a double value for " << feature_names[f] << ": ";
 		}
 
-		// if valid, then continue
-		else break;
+		std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // ignore any extra bad key buffer input
+	}
+
+	return input_features;
+}
+
+void input_parameter_rates(double& learning_rate, double& regularization_rate)
+{
+	std::cout << "\n\tPlease enter a double value for the new ***learning rate***: ";
+
+	while (!(std::cin >> learning_rate))
+	{
+		std::cin.clear(); // clear error flags
+		std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // ignore the key buffer bad input
+		std::cout << "\t[ERROR] Invalid input. Please do not enter characters or other anomalous characters for the new ***learning rate***: ";
 	}
 
 	generate_border_line();
 
-	// validate input for the regularization rate
-	while (true)
+	std::cout << "\n\tPlease enter a double value for the new ***regularization rate***: ";
+
+	while (!(std::cin >> regularization_rate))
 	{
-		std::cout << "\n\tPlease enter a double value for the new ***regularization rate***: ";
-		std::cin >> regularization_rate;
-
-		if (std::cin.fail())
-		{
-			std::cin.clear(); // clear error flags
-			std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // ignore the key buffer bad input
-			std::cout << "\t[ERROR] Invalid input. Please do not enter characters or other anomalous characters for the new ***regularization rate***.\n";
-		}
-
-		else break;
+		std::cin.clear(); // clear error flags
+		std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // ignore the key buffer bad input
+		std::cout << "\t[ERROR] Invalid input. Please do not enter characters or other anomalous characters for the new ***regularization rate***: ";
 	}
 }
 

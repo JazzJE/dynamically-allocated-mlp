@@ -11,18 +11,13 @@ OutputLayer::OutputLayer(double** layer_weights, double* layer_biases, double** 
 
 	DenseLayer(layer_weights, layer_biases, nullptr, nullptr, nullptr, nullptr, training_layer_activation_arrays, 
 		layer_activation_array, batch_size, number_of_features, number_of_neurons, layer_learning_rate, layer_regularization_rate)
-{ 
-	// delete the scales and shifts & the linear transform arrays as we won't use them
-	deallocate_memory_for_training_features(linear_transform_values, number_of_neurons);
-	deallocate_memory_for_training_features(affinal_transform_derived_values, number_of_neurons);
-	deallocate_memory_for_training_features(normalized_values, number_of_neurons);
-}
+{ }
 
 // deallocate the output array of the output layer since the output layer's activation arrays do not have a layer pointing to them as
 // that layer's input features
 OutputLayer::~OutputLayer()
 {
-	deallocate_memory_for_training_features(training_activation_arrays, batch_size);
+	deallocate_memory_for_2D_array(training_activation_arrays, batch_size);
 	delete[] activation_array;
 }
 

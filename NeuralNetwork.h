@@ -5,7 +5,10 @@
 #include "StatisticsFunctions.h"
 #include <fstream>
 #include <cstdlib>
+#include <string>
+#include <sstream>
 #include <iostream>
+#include <omp.h>
 
 class NeuralNetwork
 {
@@ -22,8 +25,6 @@ private:
 
 	const int* number_of_neurons_each_hidden_layer;
 	const int number_of_hidden_layers;
-	DenseLayer** const hidden_layers;
-	OutputLayer* const output_layer;
 
 	double*** const network_weights;
 	double** const network_biases;
@@ -31,6 +32,9 @@ private:
 	double* const network_running_variances;
 	double* const network_scales;
 	double* const network_shifts;
+
+	DenseLayer** const hidden_layers;
+	OutputLayer* const output_layer;
 	
 	// this will save and write out to the neural network the best state of the program
 	// only really will be used during training
@@ -79,6 +83,14 @@ private:
 		void write_to_current_scales_and_shifts();
 	};
 
+	// for initializing the neural network and parsing the data in its corresponding files
+	void parse_weights_and_biases_file(std::string weights_and_biases_file_name, double*** weights, double** biases,
+		const int* number_of_neurons_each_hidden_layer, int number_of_hidden_layers, int number_of_features);
+	void parse_weights_and_biases_for_layer(std::fstream& weights_and_biases_file_name, int number_of_features, int number_of_neurons,
+		double*** weights, double** biases, int layer_index);
+	// parse the means and variances OR scales and shifts file
+	void parse_mv_or_ss_file(std::string mv_or_ss_file_name, double* means_or_scales, double* variances_or_shifts, int net_number_of_neurons_in_hidden_layers);
+
 	// training components
 	void early_stop_training(BestStateLoader& bs_loader, double** training_features_normalized, double* target_values,
 		int lower_cross_validation_index, int higher_cross_validation_index, int number_of_samples);
@@ -91,15 +103,15 @@ private:
 public:
 
 	// initialize all the variables
-	NeuralNetwork(double*** weights, double** biases, double* means, double* variances, double* scales, double* shifts, 
-		const int* number_of_neurons_each_hidden_layer, int net_number_of_neurons_in_hidden_layers, int number_of_hidden_layers, 
-		int number_of_features, int batch_size, double learning_rate, double regularization_rate);
+	NeuralNetwork(const int* number_of_neurons_each_hidden_layer, int net_number_of_neurons_in_hidden_layers, int number_of_hidden_layers,
+		int number_of_features, int batch_size, double learning_rate, double regularization_rate, std::string weights_and_biases_file_name,
+		std::string means_and_vars_file_name, std::string scales_and_shifts_file_name);
 
 	// destructor to delete neural network
 	~NeuralNetwork();
 
 	// train the neural network five times based on the number of training samples
-	void five_fold_train(double** training_features, double* target_values, int number_of_samples);
+	void five_fold_train(double** training_features, bool* not_normalize, double* target_values, int number_of_samples);
 
 	// calculate a value based on the current weights and biases as well as the input features
 	double calculate_prediction(double* input_features);
@@ -111,6 +123,14 @@ public:
 	// mutator/setter methods for rates
 	void set_regularization_rate(double r_rate);
 	void set_learning_rate(double l_rate);
+
+	// accessor methods for updating the neural network files
+	double*** get_network_weights();
+	double** get_network_biases();
+	double* get_network_running_means();
+	double* get_network_running_variances();
+	double* get_network_scales();
+	double* get_network_shifts();
 
 };
 

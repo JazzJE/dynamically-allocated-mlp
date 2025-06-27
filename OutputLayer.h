@@ -1,6 +1,5 @@
 #pragma once
 #include "DenseLayer.h"
-#include <iostream>
 // the output layer will functionally have the same attributes as the normal layer; the only difference will be in the methods, 
 // which are optimized for just one (output) neuron
 class OutputLayer : public DenseLayer

@@ -18,16 +18,16 @@ DenseLayer::DenseLayer(double** layer_weights, double* layer_biases, double* run
 	activation_array(layer_activation_array),
 
 	// create new inputs that can then be used for the n - 1th layer
-	training_input_features(allocate_memory_for_training_features(batch_size, number_of_features)),
+	training_input_features(allocate_memory_for_2D_array(batch_size, number_of_features)),
 	input_features(new double[number_of_features]),
 
 	// allocate memory for linear transformation values and derived values; used primarily for training
-	linear_transform_derived_values(allocate_memory_for_training_features(number_of_neurons, batch_size)),
-	affinal_transform_derived_values(allocate_memory_for_training_features(number_of_neurons, batch_size)),
+	linear_transform_derived_values(allocate_memory_for_2D_array(number_of_neurons, batch_size)),
+	affine_transform_derived_values(allocate_memory_for_2D_array(number_of_neurons, batch_size)),
 
 	// for training computation and eventually gradient descent
-	linear_transform_values(allocate_memory_for_training_features(number_of_neurons, batch_size)),
-	normalized_values(allocate_memory_for_training_features(number_of_neurons, batch_size)),
+	linear_transform_values(allocate_memory_for_2D_array(number_of_neurons, batch_size)),
+	normalized_values(allocate_memory_for_2D_array(number_of_neurons, batch_size)),
 
 	// for the batch normalization formula
 	training_means(new double[number_of_neurons]),
@@ -44,19 +44,13 @@ DenseLayer::DenseLayer(double** layer_weights, double* layer_biases, double* run
 // so do not need to deallocate the output features up until the output layer
 DenseLayer::~DenseLayer()
 {
-	deallocate_memory_for_training_features(training_input_features, batch_size);
+	deallocate_memory_for_2D_array(training_input_features, batch_size);
 	delete[] input_features;
 
-	deallocate_memory_for_training_features(linear_transform_derived_values, number_of_neurons);
-	
-	// these pointers are nullptr only for the output layer, as they are automatically deleted after creation in the output layer constructor
-	// did this because the output layer won't use this dynamically allocated memory
-	if (!affinal_transform_derived_values)
-		deallocate_memory_for_training_features(affinal_transform_derived_values, number_of_neurons);
-	if (!linear_transform_values)
-		deallocate_memory_for_training_features(linear_transform_values, number_of_neurons);
-	if (!normalized_values)
-		deallocate_memory_for_training_features(normalized_values, number_of_neurons);
+	deallocate_memory_for_2D_array(linear_transform_derived_values, number_of_neurons);
+	deallocate_memory_for_2D_array(affine_transform_derived_values, number_of_neurons);
+	deallocate_memory_for_2D_array(linear_transform_values, number_of_neurons);
+	deallocate_memory_for_2D_array(normalized_values, number_of_neurons);
 
 	delete[] training_means;
 	delete[] training_variances;
@@ -72,8 +66,8 @@ void DenseLayer::compute_activation_array()
 	// normalize output according to running mean and running variance
 	normalize_activation_value();
 
-	// affinal transform implementation
-	affinal_transform();
+	// affine transform implementation
+	affine_transform();
 
 	// relu function implementation
 	relu_activation_function();
@@ -100,7 +94,7 @@ void DenseLayer::normalize_activation_value()
 }
 
 // scale the normalized activation value using the scale and shift
-void DenseLayer::affinal_transform()
+void DenseLayer::affine_transform()
 {
 	for (int n = 0; n < number_of_neurons; n++)
 		activation_array[n] = scales[n] * activation_array[n] + shifts[n];
@@ -124,7 +118,7 @@ void DenseLayer::training_compute_activation_arrays()
 	training_normalize_activation_value();
 
 	// transform each sample's activation value according to the current values of the scale and shift
-	training_affinal_transform();
+	training_affine_transform();
 
 	// ensure value is above 0, else make it 0
 	training_relu_activation_function();
@@ -170,7 +164,7 @@ void DenseLayer::training_normalize_activation_value()
 }
 
 // transform the normalized values; must calculate the mean and variance at this step
-void DenseLayer::training_affinal_transform()
+void DenseLayer::training_affine_transform()
 {
 	for (int n = 0; n < number_of_neurons; n++)
 		for (int s = 0; s < batch_size; s++)
@@ -182,7 +176,7 @@ void DenseLayer::training_relu_activation_function()
 {
 	for (int n = 0; n < number_of_neurons; n++)
 		for (int s = 0; s < batch_size; s++)
-			if (training_activation_arrays[s][n] <= 0) training_activation_arrays[s][n] = 0;
+			(training_activation_arrays[s][n] > 0) ? training_activation_arrays[s][n] : 0;
 }
 
 // calculate each neurons' derived values, provided the number of neurons in the next layer, the weights of the next layer, 
@@ -192,7 +186,7 @@ void DenseLayer::calculate_derived_values(double** next_layer_derived_values, do
 	// set all the derived values to 0
 	for (int n = 0; n < number_of_neurons; n++)
 		for (int s = 0; s < batch_size; s++)
-			affinal_transform_derived_values[n][s] = 0;
+			affine_transform_derived_values[n][s] = 0;
 
 	// current layer neuron
 	for (int cln = 0; cln < number_of_neurons; cln++)
@@ -205,16 +199,16 @@ void DenseLayer::calculate_derived_values(double** next_layer_derived_values, do
 			{
 				// relu function implementation derivative
 				if (training_activation_arrays[s][cln] <= 0)
-					affinal_transform_derived_values[cln][s] += 0;
+					affine_transform_derived_values[cln][s] += 0;
 				else
-					affinal_transform_derived_values[cln][s] +=
+					affine_transform_derived_values[cln][s] +=
 					next_layer_derived_values[nln][s] *
 					next_layer_weights[nln][cln];
 			}
 
 			// net derivative of the linear transform formula
 			linear_transform_derived_values[cln][s] =
-				affinal_transform_derived_values[cln][s] *
+				affine_transform_derived_values[cln][s] *
 				scales[cln] *
 
 				// derivative of the batch normalization formula
@@ -240,23 +234,32 @@ void DenseLayer::update_parameters()
 // update the weights and biases based on the average change in the activation value
 void DenseLayer::mini_batch_gd_weights_and_bias()
 {
+	double average_derived_value = 0;
+
 	for (int n = 0; n < number_of_neurons; n++)
 	{
-		double average_linear_derived_value = 0;
+		average_derived_value = 0;
 
 		// calculate average value of the derivatives of the linear transformation
 		for (int s = 0; s < batch_size; s++)
-			average_linear_derived_value += linear_transform_derived_values[n][s];
-		average_linear_derived_value /= batch_size;
+			average_derived_value += linear_transform_derived_values[n][s];
+		average_derived_value /= batch_size;
 
 		// update the value of the bias using the average and gradient descent
-		layer_biases[n] = layer_biases[n] - ((*learning_rate) * average_linear_derived_value);
+		layer_biases[n] = layer_biases[n] - ((*learning_rate) * average_derived_value);
 
-		// update the values of the weights
-		// the input feature stays constant regardless of the derived value
+		// get the average linear derived value in relation to the weights for each weight
 		for (int f = 0; f < number_of_features; f++)
-			layer_weights[n][f] = layer_weights[n][f] - (*learning_rate) * ((average_linear_derived_value * input_features[f] + 
-				*regularization_rate * layer_weights[n][f]));
+		{
+			average_derived_value = 0;
+			for (int s = 0; s < batch_size; s++)
+				average_derived_value += linear_transform_derived_values[n][s] * training_input_features[s][f];
+			average_derived_value /= batch_size;
+
+			// update the values of the weights
+			layer_weights[n][f] = layer_weights[n][f] - (*learning_rate) *
+				((average_derived_value + *regularization_rate * layer_weights[n][f]));
+		}
 	}
 }
 
@@ -265,24 +268,24 @@ void DenseLayer::mini_batch_gd_scales_and_shift()
 {
 	for (int n = 0; n < number_of_neurons; n++)
 	{
-		double average_affinal_derived_value = 0;
+		double average_affine_derived_value = 0;
 
 		// calculate average value of the derivatives of the weights
 		for (int s = 0; s < batch_size; s++)
-			average_affinal_derived_value += affinal_transform_derived_values[n][s];
-		average_affinal_derived_value /= batch_size;
+			average_affine_derived_value += affine_transform_derived_values[n][s];
+		average_affine_derived_value /= batch_size;
 
 		// update the value of the shift
-		shifts[n] = shifts[n] - (*learning_rate * average_affinal_derived_value);
+		shifts[n] = shifts[n] - (*learning_rate * average_affine_derived_value);
 
 		// update the value of the scale
 		// the derived value of the scale varies depending on the specific sample we're interacting with
-		average_affinal_derived_value = 0;
+		average_affine_derived_value = 0;
 		for (int s = 0; s < batch_size; s++)
-			average_affinal_derived_value += affinal_transform_derived_values[n][s] * normalized_values[n][s];
-		average_affinal_derived_value /= batch_size;
+			average_affine_derived_value += affine_transform_derived_values[n][s] * normalized_values[n][s];
+		average_affine_derived_value /= batch_size;
 
-		scales[n] = scales[n] - (*learning_rate * average_affinal_derived_value);
+		scales[n] = scales[n] - (*learning_rate * average_affine_derived_value);
 	}
 }
 
@@ -291,8 +294,8 @@ void DenseLayer::update_running_mean_and_variance()
 {
 	for (int n = 0; n < number_of_neurons; n++)
 	{
-		running_means[n] = momentum * training_means[n] + (1 - momentum) * running_means[n];
-		running_variances[n] = momentum * training_variances[n] + (1 - momentum) * running_variances[n];
+		running_means[n] = momentum * running_means[n] + (1 - momentum) * training_means[n];
+		running_variances[n] = momentum * running_variances[n] + (1 - momentum) * training_variances[n];
 	}
 }
 

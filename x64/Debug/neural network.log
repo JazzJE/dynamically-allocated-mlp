@@ -1,7 +1,11 @@
-﻿  main.cpp
-C:\Users\JedEs\Desktop\neural network\neural network\main.cpp(73,12): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
+﻿  DenseLayer.cpp
+  InitializationFunctions.cpp
+C:\Users\JedEs\Desktop\neural network\neural network\DenseLayer.cpp(39,10): warning C4244: 'initializing': conversion from 'double' to 'const int', possible loss of data
   MenuFunctions.cpp
   NeuralNetwork.cpp
   StatisticsFunctions.cpp
+  main.cpp
+C:\Users\JedEs\Desktop\neural network\neural network\main.cpp(97,12): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
   Generating Code...
+  OutputLayer.cpp
   neural network.vcxproj -> C:\Users\JedEs\Desktop\neural network\x64\Debug\neural network.exe

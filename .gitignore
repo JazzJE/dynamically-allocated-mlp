@@ -1,0 +1,88 @@
+# Visual Studio build directories
+Debug/
+x64/
+Release/
+Win32/
+ARM/
+ARM64/
+
+# Visual Studio project files (keep source, ignore project files)
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.sln
+*.aps
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# CMake build directories
+build/
+out/
+cmake-build-*/
+
+# Executables
+*.exe
+*.out
+*.app
+
+# Object files
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Libraries
+*.lib
+*.a
+*.la
+*.lo
+*.dll
+*.so
+*.dylib
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# Debug files
+*.dSYM/
+*.su
+*.idb
+*.pdb
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+*.cache
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+.vs/
+.vscode/
+*.swp
+*.swo
+*~

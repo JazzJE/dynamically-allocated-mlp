@@ -74,7 +74,7 @@ int main()
 		// the third hidden layer will have 32 neurons
 		// the fourth/output layer (automatically/implicitly created) will have 1 neuron, predicting the value
 	
-	const int number_of_neurons_each_hidden_layer[] = { 128, 64, 32 };
+	const int number_of_neurons_each_hidden_layer[] = { 256, 128, 32 };
 
 
 

@@ -7,6 +7,9 @@
 		// running means and variances,
 		// the number of weights they will have (which is the number of neurons in the previous layer but number of features for first layer),
 		// the input arrays of the next layer which will function as the layer's output arrays
+		// the network rates,
+		// batch size,
+		// the number of weights/features,
 		// and the number of neurons they will have
 
 NeuralNetwork::NeuralNetwork(const int* number_of_neurons_each_hidden_layer, int net_number_of_neurons_in_hidden_layers, int number_of_hidden_layers,

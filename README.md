@@ -21,16 +21,32 @@ Simple multi-layer perceptron made from scratch that does not use C++'s vector l
     - Batch normalization
     - ReLU activation functions
 
-## Installation and Setup
+## Setup
 
+### Requirements
 
+- C++ 17 or higher
+- OpenMP support (required for parallel processing)
+
+### Setup Guide
+
+1. Clone this repo
+    ```
+    git clone https://github.com/JazzJE/dynamically-allocated-mlp
+    ```
+2. Go into the root folder (where main.cpp is), create a new build directory, and initialize it with this command
+    ```
+    mkdir build
+    cd build
+    cmake ..
+    ```
 
 ## Usage
 
 * _Rules for the CSV data set that will be imported into this MLP_
-    - Rename the data set to "dataset.csv" and drop it into the root directory (where main.cpp automatically is)
+    - **Rename the data set to "dataset.csv"** and drop it into the root directory (where main.cpp automatically is)
     - **The last column of the CSV are the target values** you would like to predict
-    - The first line must contain the names of each feature
+    - **The first line must contain the names of each feature**
         - **If you would like certain features to be ignored during the normalization of features, please make sure to place a "\~" before the feature name** (i.e., if I have a one-hot encoded feature name of "is_coastal_luxury," then I would rename this feature within my data set to "\~is_coastal_luxury"; refer to first line of the CSV data set initially within this program for reference)
     - After the first line of column feature name titles, every value within the data set must be an integer or double value
         - This includes boolean values (represent them as 0s or 1s, not "True" or "False")
@@ -45,15 +61,13 @@ Simple multi-layer perceptron made from scratch that does not use C++'s vector l
         - 1 neuron in the output layer, which is implicitly created whenever the program is run, and which will output the result
     - Then, recompile the program with the following commands
         ```
-        mkdir build         // make this directory if not made already
         cd build
-        cmake ..            // only run this command once after cloning the project
         cmake --build .
         ```
 
-* Run the program
+* Run the program from the root directory, _NOT_ the build directory
     ```
-    ./neural_network.exe    // from the root directory
+    ./neural_network.exe
     ```
     - If the neural network files or the data set files have errors in them, the program will end and ask you to fix them before interacting further
         - However, for the neural network files, the program will ask if they would also like to generate new ones instead; please do this if you would like to generate a new MLP that has a different structure of neurons or the data set has changed

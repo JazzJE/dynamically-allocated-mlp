@@ -14,7 +14,7 @@ Simple multi-layer perceptron made from scratch that does not use C++'s vector l
 - [License](#license)
 
 ## Original Dataset
-This project uses the California Housing Prices dataset from Kaggle:
+This project uses the [California Housing Prices](https://www.kaggle.com/datasets/camnugent/california-housing-prices) dataset from Kaggle:
 Nugent, C. (2017). California Housing Prices. Kaggle.
 
 License: CC0 1.0 (Public Domain).
@@ -90,7 +90,7 @@ Other runtime features of the program:
    - All values (except header) must be integers or doubles
    - Boolean values should be 0s or 1s, not "True"/"False"
    - No strings or characters allowed
-3. **Feature normalization**: To skip normalization for certain features, prefix the feature name with "~" (e.g., "~is_coastal_luxury"; refer to initial dataset.csv feature column names)
+3. **Feature normalization**: To skip normalization for certain features, prefix the feature name with "\~" (e.g., "\~is_coastal_luxury"; refer to initial dataset.csv feature column names)
 
 ### Running the Program
 
@@ -122,7 +122,7 @@ Execute from the root directory:
 ## Performance
 
 ### Expected Results
-The MLP typically achieves competitive performance on the California Housing dataset. Training time depends on:
+The MLP typically achieves decent performance on the California Housing dataset. Training time depends on:
 - Network architecture (number of layers/neurons)
 - Batch size
 - Learning rate
@@ -142,7 +142,7 @@ This implementation uses dynamic memory allocation with raw pointers, which prov
 
 **Program exits with file validation errors**
 - Ensure `dataset.csv` is in the root directory
-- Check that your CSV follows the format requirements
+- Check that your CSV follows the format requirements; ensure to check the line in which the error was found
 - Verify neural network files aren't corrupted (delete `nn_current_state` folder to regenerate)
 
 **Compilation errors**
@@ -183,11 +183,6 @@ This is primarily an educational project demonstrating C++ memory management and
 ## License
 
 This project is open source. The California Housing dataset used is licensed under CC0 1.0 (Public Domain).
-
-## Acknowledgments
-
-- California Housing Prices dataset by C. Nugent (2017) from Kaggle
-- OpenMP for parallel processing support
 
 ---
 

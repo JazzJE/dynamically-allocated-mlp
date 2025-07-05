@@ -1,5 +1,7 @@
 #include "StatisticsFunctions.h"
 
+constexpr double epsilon = 1e-5;
+
 // calculating means of a provided range
 
 // the lower_validation_index and higher_validation_index parameters refer to the training sample of the lower range of the 
@@ -93,7 +95,7 @@ double** calculate_normalized_features(double** sample_features, bool* not_norma
 				continue;
 			}
 
-			normalized_features[t][f] = ((sample_features[t][f] - means_array[f]) / (sqrt(variances_array[f] + 1e-5)));
+			normalized_features[t][f] = ((sample_features[t][f] - means_array[f]) / (sqrt(variances_array[f] + epsilon)));
 		}
 
 	return normalized_features;
@@ -113,7 +115,7 @@ double* calculate_normalized_features(double* sample_features, bool* not_normali
 			continue;
 		}
 
-		normalized_features[f] = ((sample_features[f] - means_array[f]) / (sqrt(variances_array[f] + 1e-5)));
+		normalized_features[f] = ((sample_features[f] - means_array[f]) / (sqrt(variances_array[f] + epsilon)));
 	}
 
 	return normalized_features;

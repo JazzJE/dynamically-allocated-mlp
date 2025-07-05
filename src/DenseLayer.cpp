@@ -1,5 +1,7 @@
 ﻿#include "DenseLayer.h"
 
+constexpr double epsilon = 1e-5;
+
 DenseLayer::DenseLayer(double** layer_weights, double* layer_biases, double* running_means, double* running_variances, double* scales,
 	double* shifts, double** training_layer_activation_values, double* layer_activation_array, int batch_size, int number_of_features,
 	int number_of_neurons, double* layer_learning_rate, double* layer_regularization_rate) :
@@ -75,7 +77,7 @@ void DenseLayer::normalize_linear_transform_value()
 {
 	for (int n = 0; n < number_of_neurons; n++)
 	{
-		activation_array[n] = (activation_array[n] - running_means[n]) / (sqrt(running_variances[n] + 1e-5));
+		activation_array[n] = (activation_array[n] - running_means[n]) / (sqrt(running_variances[n] + epsilon));
 		activation_array[n] = scales[n] * activation_array[n] + shifts[n];
 	}
 }
@@ -134,7 +136,7 @@ void DenseLayer::training_normalize_linear_transform_value()
 		// pass them into the normalized values array for backpropagation first
 		for (int s = 0; s < batch_size; s++)
 		{
-			normalized_values[n][s] = (linear_transform_values[n][s] - training_means[n]) / (sqrt(training_variances[n] + 1e-5));
+			normalized_values[n][s] = (linear_transform_values[n][s] - training_means[n]) / (sqrt(training_variances[n] + epsilon));
 			training_activation_arrays[s][n] = scales[n] * normalized_values[n][s] + shifts[n];
 		}
 	}
@@ -185,10 +187,10 @@ void DenseLayer::calculate_derived_values(double** next_layer_derived_values, do
 		// Then calculate gradient for each sample
 		for (int s = 0; s < batch_size; s++)
 		{
-			linear_transform_derived_values[cln][s] = scales[cln] * 1.0 / sqrt(training_variances[cln] + 1e-5) * (
+			linear_transform_derived_values[cln][s] = scales[cln] * 1.0 / sqrt(training_variances[cln] + epsilon) * (
 				affine_transform_derived_values[cln][s] - affine_derived_value_sum / batch_size - 
 				(linear_transform_values[cln][s] - training_means[cln]) * 
-				affine_derived_value_difference_sum / (batch_size * (training_variances[cln] + 1e-5))
+				affine_derived_value_difference_sum / (batch_size * (training_variances[cln] + epsilon))
 			);
 		}
 	}

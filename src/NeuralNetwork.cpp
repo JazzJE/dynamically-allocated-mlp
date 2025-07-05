@@ -80,7 +80,7 @@ NeuralNetwork::NeuralNetwork(const int* number_of_neurons_each_hidden_layer, int
 		}
 
 		// note that the current_index will always equal to 0 at this point
-		*hidden_layers = new DenseLayer(network_weights[0], network_biases[0], network_running_means, network_running_variances, network_scales,
+		hidden_layers[0] = new DenseLayer(network_weights[0], network_biases[0], network_running_means, network_running_variances, network_scales,
 			network_shifts, hidden_layers[1]->get_training_input_features(), hidden_layers[1]->get_input_features(), batch_size, 
 			network_number_of_features, number_of_neurons_each_hidden_layer[0], network_learning_rate, network_regularization_rate);
 	}
@@ -168,8 +168,6 @@ void NeuralNetwork::five_fold_train(double** training_features, bool* not_normal
 void NeuralNetwork::early_stop_training(BestStateLoader& bs_loader, double** training_features_normalized, double* log_transformed_target_values, 
 	int lower_validation_index, int higher_validation_index, int number_of_samples)
 {
-	const double decay_rate = 0.95;
-	const double explosion_max = 1e30;
 	int epoch_number = 0;
 	int fail_decay_epoch = patience / 4 * 3;
 	double best_mse, current_mse;
@@ -187,8 +185,6 @@ void NeuralNetwork::early_stop_training(BestStateLoader& bs_loader, double** tra
 
 	// compute initial mse of the fold
 	best_mse = 0;
-
-	#pragma omp parallel for reduction(+:best_mse)
 	for (int i = lower_validation_index; i <= higher_validation_index; i++)
 	{
 		double pred = calculate_prediction(training_features_normalized[i]);
@@ -222,7 +218,6 @@ void NeuralNetwork::early_stop_training(BestStateLoader& bs_loader, double** tra
 
 		// calculate the new mse of the validation set
 		current_mse = 0;
-		#pragma omp parallel for reduction(+:current_mse)
 		for (int i = lower_validation_index; i <= higher_validation_index; i++)
 		{
 			double pred = calculate_prediction(training_features_normalized[i]);

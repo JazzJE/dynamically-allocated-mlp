@@ -2,6 +2,14 @@
 
 Simple multi-layer perceptron made from scratch that does not use C++'s vector library, and instead opts to function via dynamic memory allocation w/ raw pointers. This project is more of a demonstration of my interest in ML, C++, and math in general than something to be used seriously in production; I just love pointers a lot.
 
+## Original Dataset
+
+This project uses the **California Housing Prices** dataset from Kaggle:  
+[Nugent, C. (2017). *California Housing Prices*. Kaggle.](https://www.kaggle.com/datasets/camnugent/california-housing-prices)  
+
+License: CC0 1.0 (Public Domain).  
+
+
 ## Features
 
 * The program does all of the following automatically within the program w/o editing the original data set file prior to menu prompts
@@ -43,12 +51,12 @@ Simple multi-layer perceptron made from scratch that does not use C++'s vector l
     - If you would like to retrain a nerual network from scratch and still use the given number_of_neurons_each_hidden_layer array, then simply delete the "nn_current_state" directory in the root folder  
     - Otherwise, _whenever you to change the number of neurons for each layer or the structure of the MLP_, follow these steps
         1. Go to main.cpp and edit the number_of_neurons_each_hidden_layer array
-            1. This array should only have positive integers, and there should be at least one integer within the array
-            2. If an array of { 256, 128, 32 } is provided for number_of_neurons_each_hidden_layer, then there will be...
-                * 256 neurons in the first layer
-                * 128 neurons in the second layer
-                * 32 neurons in the third layer
-                *  1 neuron in the output layer, which is implicitly created whenever the program is run, and which will output the result
+            - This array should only have positive integers, and there should be at least one integer within the array
+            - If an array of { 256, 128, 32 } is provided for number_of_neurons_each_hidden_layer, then there will be...
+                1. 256 neurons in the first layer
+                2. 128 neurons in the second layer
+                3. 32 neurons in the third layer
+                4.  1 neuron in the output layer, which is implicitly created whenever the program is run, and which will output the result
         2. Then, recompile the program with the following commands from the root directory; **you must do this every time the array is edited, else the program will not be updated next execution**
             ```
             cd build

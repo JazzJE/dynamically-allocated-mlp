@@ -64,7 +64,8 @@ int main()
 
 	// !!! REMINDER that the last column is the column of values you want to predict !!!
 		// for example, if you have features of a house and want to predict price, then make the house prices the last column of the csv
-	// data set used: https://www.kaggle.com/datasets/camnugent/california-housing-prices?resource=download
+	// original data set used: https://www.kaggle.com/datasets/camnugent/california-housing-prices
+
 
 	// !!! NOTE AGAIN that this program is hard-written with a single neuron for output !!!
 	// this is the order and number of neurons you want in each hidden layer

@@ -17,7 +17,8 @@ private:
 
 	// used for deleting network and training
 	const int net_number_of_neurons_in_hidden_layers;
-
+	const double decay_rate = 0.95;
+	const double explosion_max = 1e30;
 	const int network_number_of_features;
 	const int batch_size;
 

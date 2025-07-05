@@ -38,7 +38,7 @@ Other runtime features of the program:
 ### Requirements
 - C++ 17 or higher
 - OpenMP support (required for parallel processing)
-- CMake 3.10 or higher
+- CMake 3.15 or higher
 - A compatible C++ compiler (GCC, Clang, or MSVC)
 
 ### Setup Guide
@@ -90,7 +90,7 @@ Other runtime features of the program:
    - All values (except header) must be integers or doubles
    - Boolean values should be 0s or 1s, not "True"/"False"
    - No strings or characters allowed
-3. **Feature normalization**: To skip normalization for certain features, prefix the feature name with "~" (e.g., "~is_coastal_luxury")
+3. **Feature normalization**: To skip normalization for certain features, prefix the feature name with "~" (e.g., "~is_coastal_luxury"; refer to initial dataset.csv feature column names)
 
 ### Running the Program
 
@@ -148,7 +148,7 @@ This implementation uses dynamic memory allocation with raw pointers, which prov
 **Compilation errors**
 - Ensure you have C++17 or higher
 - Verify OpenMP is available on your system
-- Check that CMake version is 3.10 or higher
+- Check that CMake version is 3.15 or higher
 
 **Memory-related crashes**
 - This is a learning project using raw pointers - such issues are expected
@@ -178,7 +178,7 @@ This is primarily an educational project demonstrating C++ memory management and
 - Additional activation functions
 - More robust error handling
 - Performance optimizations
-- Better documentation of the mathematical operations
+- Better documentation, review, or fixes for the mathematical operations and backpropagation formulas 
 
 ## License
 

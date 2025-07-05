@@ -171,8 +171,8 @@ void DenseLayer::calculate_derived_values(double** next_layer_derived_values, do
 					next_layer_derived_values[nln][s] *
 					next_layer_weights[nln][cln];
 
-		double affine_derived_value_sum = 0.0; // ∑∂L/∂y_j
-		double affine_derived_value_difference_sum = 0.0; // ∑(x_j - μ)∂L/∂y_j
+		double affine_derived_value_sum = 0.0; // ∑∂L/∂y_j; summation of derivative of loss in relation to each batch normalization value
+		double affine_derived_value_difference_sum = 0.0; // ∑(x_j - μ)∂L/∂y_j; summation of derivatibe of loss in relation to each normalization value times the difference of the linear transformation value and mean
 
 		#pragma omp parallel for reduction(+:affine_derived_value_sum, affine_derived_value_difference_sum)
 		for (int s = 0; s < batch_size; s++)

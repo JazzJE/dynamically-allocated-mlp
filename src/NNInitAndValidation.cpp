@@ -119,8 +119,10 @@ void NeuralNetwork::validate_weights_and_biases_file(std::fstream& weights_and_b
 		// ask user if they would like to reset their neural network, and if not, then end the program
 		// this is so they can update the configuration to their weights and biases folder if they accidentally interacted with it,
 		// as the files should not be changed
-		std::cerr << "\n[ERROR] " << weights_and_biases_file_path << " is erroneous (there are not enough weights to accomodate all features, "
-			<< "a string value was detected, or there is an extra line as a result of changing the number_of_neurons_each_hidden_layer array)"
+		std::cerr << "\n[ERROR] " << weights_and_biases_file_path << " contains one of the following errors"
+			<< "\n\n\t1. String value was detected"
+			<< "\n\t2. There are not enough weights in the below-provided line"
+			<< "\n\t3. There are too many or too few lines within the file"
 			<< "\n\n\t*** The error was found on line #" << line_error << " in " << weights_and_biases_file_path << " ***"
 			<< "\n\nWould you like to generate a new " << weights_and_biases_file_path << "?"
 			<< "\n\nPlease select yes or no (Y / N): ";
@@ -285,10 +287,12 @@ void NeuralNetwork::validate_mv_or_ss_file(std::fstream& mv_or_ss_file, std::str
 	{
 		char option;
 
-		std::cout << "\n[ERROR] There seems to be a type casting error or too many fields in " << mv_or_ss_file_path << ", or the number_of neurons_each_hidden_layer array was updated"
+		std::cout << "\n[ERROR] One of the following errors is within " << mv_or_ss_file_path
+			<< "\n\n\t1. String value was detected"
+			<< "\n\t2. There are greater than two fields within the below-provided line"
+			<< "\n\t3. There are too many or too few lines within the file"
 			<< "\n\n\t***The error was found on line " << line_error << " in " << mv_or_ss_file_path << " ***"
-			<< "\n\nWould you like to generate a new " << mv_or_ss_file_path << " file? This is effective to ONLY resetting this part of "
-			<< "your neural network, but it is recommended to simply fix the error manually (Y / N): ";
+			<< "\n\nWould you like to generate a new " << mv_or_ss_file_path << " file?: ";
 		std::cin >> option;
 
 		while (option != 'Y' && option != 'N')

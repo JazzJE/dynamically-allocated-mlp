@@ -86,7 +86,7 @@ Other runtime features of the program:
 1. **File naming**: Rename your dataset to "dataset.csv" and place it in the root directory
 2. **Structure requirements**:
    - Last column must contain target values
-        - All target values must be positive numbers due to log transformation of target values
+        - All target values cannot be negative or equal to zero due to log transformation of target values
    - First line must contain feature names
    - All values (except header) must be integers or doubles
    - Boolean values should be 0s or 1s, not "True"/"False"

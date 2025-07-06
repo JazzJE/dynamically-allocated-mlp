@@ -61,8 +61,10 @@ void validate_dataset_file(std::fstream& dataset_file, std::string dataset_file_
 	int line_error = find_error_dataset_file(dataset_file, number_of_features);
 	if (line_error != -1)
 	{
-		std::cerr << "[ERROR] The " << dataset_file_name << " is inconsistent(aka some rows have more features / columns than others) "
-			<< "OR there is a string value in the dataset (ONLY THE FIRST LANE CAN HAVE FEATURE NAMES; the rest of the dataset must only accept double values)."
+		std::cerr << "\n[ERROR] The " << dataset_file_name << " has one or more of the following errors"
+			<< "\n\n\t1. Below-provided line has more or less features / columns than others"
+			<< "\n\t2. String value in data set (only first line may have feature names)"
+			<< "\n\t3. The target value / last column is less than or equal to 0"
 			<< "\n\n\t*** The error was found on line #" << line_error << " in " << dataset_file_name << " ***"
 			<< "\n\nPlease update your dataset file accordingly."
 			<< "\n\nEnding program...\n";
@@ -74,7 +76,7 @@ void validate_dataset_file(std::fstream& dataset_file, std::string dataset_file_
 // the function will return the line in which the error was found so it can be altered easily; if not found, return -1
 int find_error_dataset_file(std::fstream& dataset_file, int number_of_features)
 {
-	int line_error = 0;
+	int line_error = 1;
 	int field_count;
 	double temp_double;
 
@@ -94,7 +96,7 @@ int find_error_dataset_file(std::fstream& dataset_file, int number_of_features)
 
 		while (getline(ss, value, ','))
 		{
-			// validate that the value being parsed is not a string or anamolous — there should only be double values
+			// validate that the value being parsed is not a string or anamolous - there should only be double values
 			converter.clear();
 			converter.str(value);
 
@@ -107,6 +109,9 @@ int find_error_dataset_file(std::fstream& dataset_file, int number_of_features)
 
 		// the field count also counts the last column, but must ignore it as it's not an input feature but the target value field
 		if (field_count - 1 != number_of_features) return line_error;
+
+		// if the target value is zero or negative, then don't accept it due to log transformation of target values later on
+		if (temp_double <= 0) return line_error;
 	}
 
 	// reset to start as no error was found

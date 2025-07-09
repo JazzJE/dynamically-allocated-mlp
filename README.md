@@ -71,7 +71,7 @@ Other runtime features of the program:
      - 256 neurons in the first layer
      - 128 neurons in the second layer
      - 32 neurons in the third layer
-     - 1 neuron in the output layer (implicitly created)
+     - 1 neuron in the output layer (implicitly created when program is run)
 
 2. Recompile the program:
    ```bash
@@ -92,6 +92,7 @@ Other runtime features of the program:
    - Boolean values should be 0s or 1s, not "True"/"False"
    - No strings or characters allowed
 3. **Feature normalization**: To skip normalization for certain features, prefix the feature name with "\~" (e.g., "\~is_coastal_luxury"; refer to initial dataset.csv feature column names)
+4. **MLP Regeneration**: Delete the "nn_current_state" directory to retrain the MLP on the new data set from scratch and get rid of any old valueshttps://www.kaggle.com/datasets/camnugent/california-housing-prices
 
 ### Running the Program
 
@@ -105,7 +106,7 @@ Execute from the root directory:
 ### Runtime Parameters
 
 - **Batch size**: Number of samples loaded per training epoch
-  - Changing this regenerates the entire MLP but maintains training options
+  - Changing this maintains the values of the other runtime parameters
 - **Learning rate**: Controls how fast the MLP changes with respect to loss
 - **Regularization rate**: Adjustment factor for better generalization to new samples
 - **Patience**: Number of failed training epochs before ending training on a fold

@@ -70,12 +70,11 @@ int main()
 	// !!! NOTE AGAIN that this program is hard-written with a single neuron for output !!!
 	// this is the order and number of neurons you want in each hidden layer
 	// in the below example...
-		// the first hidden layer will have 256 neurons
-		// the second hidden layer will have 128 neurons
-		// the third hidden layer will have 32 neurons
-		// the fourth/output layer (automatically/implicitly created) will have 1 neuron, predicting the value
+		// the first hidden layer will have 64 neurons
+		// the second hidden layer will have 32 neurons
+		// the third/output layer (automatically/implicitly created) will have 1 neuron, predicting the value
 	
-	const int number_of_neurons_each_hidden_layer[] = { 256, 128, 32 };
+	const int number_of_neurons_each_hidden_layer[] = { 64, 32 };
 
 
 

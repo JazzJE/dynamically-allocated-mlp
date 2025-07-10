@@ -44,6 +44,7 @@
 #include <cstdlib>
 #include <string>
 #include <filesystem>
+#include <limits>
 #include "InitializationFunctions.h"
 #include "MemoryFunctions.h"
 #include "MenuFunctions.h"
@@ -70,11 +71,12 @@ int main()
 	// !!! NOTE AGAIN that this program is hard-written with a single neuron for output !!!
 	// this is the order and number of neurons you want in each hidden layer
 	// in the below example...
-		// the first hidden layer will have 64 neurons
-		// the second hidden layer will have 32 neurons
-		// the third/output layer (automatically/implicitly created) will have 1 neuron, predicting the value
+		// the first hidden layer will have 128 neurons
+		// the second hidden layer will have 64 neurons
+		// the third hidden layer will have 32 neurons
+		// the fourth/output layer (automatically/implicitly created) will have 1 neuron, predicting the value
 	
-	const int number_of_neurons_each_hidden_layer[] = { 64, 32 };
+	const int number_of_neurons_each_hidden_layer[] = { 128, 64, 32 };
 
 
 
@@ -191,15 +193,22 @@ int main()
 			<< "\n\t2. Randomize order of training samples"
 			<< "\n\t3. Predict a value using provided sample features"
 			<< "\n\t4. Predict a value using a random sample"
-			<< "\n\t5. Save your latest, best neural network state"
+			<< "\n\t5. Save the latest, best neural network state in memory"
 			<< "\n\t6. Change training parameters/options"
 			<< "\n\t7. Change the batch size of the neural network (everything will be the same but the batch size)"
 			<< "\n\t8. Exit program (will not save the program)"
 			<< "\nPlease select an option: ";
 		std::cin >> option;
 
-		while (option < '1' || option > '8')
+		while (option < '1' || option > '8' || std::cin.peek() != '\n')
 		{
+			// clear buffer if user inputted a string with a valid number
+			if (std::cin.peek() != '\n')
+			{
+				std::cin.clear(); // clear error flags
+                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // ignore the key buffer bad input
+			}
+
 			std::cout << "[ERROR] Please enter a valid input (1-8): ";
 			std::cin >> option;
 		}

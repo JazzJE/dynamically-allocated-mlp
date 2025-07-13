@@ -6,8 +6,11 @@ class DenseLayer
 {
 protected:
 
-	double* learning_rate;
-	double* regularization_rate;
+	double** const layer_weights;
+	double* const layer_biases;
+
+	double* const learning_rate;
+	double* const regularization_rate;
 
 	// for normalization
 	double* const training_means;
@@ -24,22 +27,16 @@ protected:
 	double* const input_features;
 	double* const activation_array;
 
-	// to pass in the input features quickly into each neuron
-	const int batch_size;
-	double** const training_input_features;
-	double** const training_activation_arrays;
-
-	// each neurons' derived values within this layer
-		// these are the derived values for the weights and biases
-	double** const linear_transform_derived_values;
-		// these are the derived values for the scales and shifts
-	double** const affine_transform_derived_values;
-	
-	// used for training computations
-	double** const layer_weights;
-	double* const layer_biases;
-	double** const linear_transform_values;
-	double** const normalized_values;
+	// used for training computations; these all rely on batch size
+	int batch_size;
+	double** training_input_features;
+	double** training_activation_arrays;
+	// these are the derived values for the weights and biases
+	double** linear_transform_derived_values;
+	// these are the derived values for the scales and shifts
+	double** affine_transform_derived_values;
+	double** linear_transform_values;
+	double** normalized_values;
 
 	const double momentum = 0.9;
 
@@ -58,16 +55,16 @@ protected:
 	void training_normalize_linear_transform_value();
 	void training_relu_activation_function();
 
-
 public:
 
-	// constructor that will initialize each neuron inside of the layer
 	DenseLayer(double** layer_weights, double* layer_biases, double* running_means, double* running_variances, double* scales, 
-		double* shifts, double** training_layer_activation_arrays, double* layer_activation_array, int batch_size, int number_of_features, 
-		int number_of_neurons, double* learning_rate, double* regularization_rate);
+		double* shifts, double* layer_activation_array, int number_of_features, int number_of_neurons, double* learning_rate, 
+		double* regularization_rate);
 
-	// delete all the dynamically allocated objects
 	~DenseLayer();
+
+	// updating the batch size of a layer requires a lot of alterations to dynamically allocated memory
+	void update_arrays_using_batch_size(int new_batch_size, double** new_training_activation_arrays);
 
 	// layer will go through each neuron and compute its activation values
 	void compute_activation_array();

@@ -1,10 +1,9 @@
 #include "OutputLayer.h"
-OutputLayer::OutputLayer(double** layer_weights, double* layer_biases, double** training_layer_activation_arrays, 
-	double* layer_activation_array, int batch_size,  int number_of_features, int number_of_neurons, double* layer_learning_rate, 
-	double* layer_regularization_rate) :
+OutputLayer::OutputLayer(double** layer_weights, double* layer_biases, double* layer_activation_array, int number_of_features, 
+	int number_of_neurons, double* layer_learning_rate, double* layer_regularization_rate) :
 
-	DenseLayer(layer_weights, layer_biases, nullptr, nullptr, nullptr, nullptr, training_layer_activation_arrays, 
-		layer_activation_array, batch_size, number_of_features, number_of_neurons, layer_learning_rate, layer_regularization_rate)
+	DenseLayer(layer_weights, layer_biases, nullptr, nullptr, nullptr, nullptr, layer_activation_array, number_of_features, 
+		number_of_neurons, layer_learning_rate, layer_regularization_rate)
 { }
 
 // deallocate the output array of the output layer since the output layer's activation arrays do not have a layer pointing to them

@@ -1,7 +1,147 @@
 #include "MenuFunctions.h"
-void generate_border_line()
+
+MenuOptions get_option()
 {
-	std::cout << '\n' << std::setw(32) << std::right << "----------------------\n";
+	char option;
+	std::cout << "Option Menu:"
+		<< "\n\t1. Train neural network on entire data set"
+		<< "\n\t2. Test parameters using five-fold training"
+		<< "\n\t3. Save the best neural network state found from entire data set"
+		<< "\n\t4. Randomize order of training samples"
+		<< "\n\t5. Predict a value using provided sample features"
+		<< "\n\t6. Predict a value using a random sample"
+		<< "\n\t7. Exit program (will not save the neural network state)"
+		<< "\nPlease select an option: ";
+	std::cin >> option;
+
+	while (static_cast<MenuOptions>(option) < FIRST_OPTION || static_cast<MenuOptions>(option) > LAST_OPTION || std::cin.peek() != '\n')
+	{
+		std::cin.clear(); // clear error flags
+		std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // ignore the key buffer bad input
+
+		std::cout << "[ERROR] Please enter a valid input (" << static_cast<char>(MenuOptions::FIRST_OPTION) << " - " << 
+			static_cast<char>(MenuOptions::LAST_OPTION) << "): ";
+		std::cin >> option;
+	}
+
+	return static_cast<MenuOptions>(option);
+}
+
+void generate_border_line()
+{ std::cout << '\n' << std::setw(32) << std::right << "----------------------\n"; }
+
+
+void save_neural_network_state(NeuralNetwork* neural_network, std::string weights_and_biases_file_path, std::string means_and_vars_file_path,
+	std::string scales_and_shifts_file_path, const int* number_of_neurons_each_hidden_layer, int number_of_hidden_layers, 
+	int number_of_features, int net_number_of_neurons_in_hidden_layers)
+{
+	std::cout << "\n\n\tUpdating the " << weights_and_biases_file_path << " file...";
+	update_weights_and_biases_file(weights_and_biases_file_path, neural_network->get_network_weights(),
+		neural_network->get_network_biases(), number_of_neurons_each_hidden_layer, number_of_hidden_layers,
+		number_of_features);
+
+	std::cout << "\n\tUpdating the " << means_and_vars_file_path << " file...";
+	update_mv_or_ss_file(means_and_vars_file_path, neural_network->get_network_running_means(),
+		neural_network->get_network_running_variances(), net_number_of_neurons_in_hidden_layers);
+
+	std::cout << "\n\tUpdating the " << scales_and_shifts_file_path << " file...";
+	update_mv_or_ss_file(scales_and_shifts_file_path, neural_network->get_network_scales(),
+		neural_network->get_network_shifts(), net_number_of_neurons_in_hidden_layers);
+
+	std::cout << "\n\n\tDone!\n";
+}
+
+void all_sample_train_network_option(NeuralNetwork* neural_network, double** all_features_normalized, double* log_transformed_target_values,
+	int number_of_samples)
+{
+	// this boolean limits the max number of samples per batch to the all possible samples
+	bool using_all_samples = true;
+
+	// input the rates of the nn
+	double new_learning_rate, new_regularization_rate;
+	int new_patience, new_number_of_epochs;
+	input_rates(new_learning_rate, new_regularization_rate, new_patience, new_number_of_epochs);
+	int new_batch_size;
+	input_batch_size(new_batch_size, number_of_samples, using_all_samples);
+
+	neural_network->set_learning_rate(new_learning_rate);
+	neural_network->set_regularization_rate(new_regularization_rate);
+	neural_network->set_patience(new_patience);
+	neural_network->set_number_of_epochs(new_number_of_epochs);
+	neural_network->set_batch_size(new_batch_size);
+
+	std::cout << "\n\tTraining your network on all samples...";
+	neural_network->all_sample_train(all_features_normalized, log_transformed_target_values, number_of_samples);
+	std::cout << "\n\n\tDone!\n";
+}
+
+void five_fold_train_network_option(NeuralNetwork* neural_network, double** training_features, bool* not_normalize,
+	double* log_transformed_target_values, int number_of_samples)
+{
+	// this boolean limits the max number of samples per batch to the number of samples minus the amount in the cross-validation fold
+	bool using_all_samples = false;
+
+	// input rates
+	double new_learning_rate, new_regularization_rate;
+	int new_patience, new_number_of_epochs;
+	input_rates(new_learning_rate, new_regularization_rate, new_patience, new_number_of_epochs);
+	int new_batch_size;
+	input_batch_size(new_batch_size, number_of_samples, using_all_samples);
+
+	neural_network->set_learning_rate(new_learning_rate);
+	neural_network->set_regularization_rate(new_regularization_rate);
+	neural_network->set_patience(new_patience);
+	neural_network->set_number_of_epochs(new_number_of_epochs);
+	neural_network->set_batch_size(new_batch_size);
+
+	std::cout << "\n\tTraining your network on all samples...";
+	neural_network->five_fold_train(training_features, not_normalize, log_transformed_target_values, number_of_samples);
+	std::cout << "\n\n\tDone!\n";
+}
+
+void predict_with_provided_features_option(NeuralNetwork* neural_network, std::string* feature_names, std::string target_name,
+	double* all_features_means, double* all_features_variances, bool* not_normalize, int number_of_features)
+{
+	double* new_features = input_new_features(feature_names, not_normalize, number_of_features);
+
+	std::cout << "\n\tProvided these features: ";
+	for (int f = 0; f < number_of_features; f++)
+		std::cout << "\n\t\t" << feature_names[f] << " - " << new_features[f];
+
+	double* normalized_features = calculate_normalized_features(new_features, not_normalize, number_of_features,
+		all_features_means, all_features_variances);
+
+	std::cout << "\n\n\tNormalized features: ";
+	for (int f = 0; f < number_of_features; f++)
+		std::cout << "\n\t\t" << feature_names[f] << " - " << normalized_features[f];
+
+	double prediction = neural_network->calculate_prediction(normalized_features);
+	std::cout << "\n\n\tPredicted log-transformed value of " << target_name << ": " << prediction
+		<< "\n\tPredicted actual value of " << target_name << ": " << pow(e, prediction) - 1 << "\n";
+
+	delete[] new_features;
+	delete[] normalized_features;
+}
+
+void predict_with_random_features_option(NeuralNetwork* neural_network, std::string* feature_names, std::string target_name, 
+	double** training_features, double** all_features_normalized, double* target_values, double* log_transformed_target_values,
+	int* sample_numbers, int number_of_samples, int number_of_features)
+{
+	int random_index = std::rand() % number_of_samples;
+	std::cout << "\n\tProvided these features for sample #" << sample_numbers[random_index] << " within your dataset: ";
+	for (int f = 0; f < number_of_features; f++)
+		std::cout << "\n\t\t" << feature_names[f] << " - " << training_features[random_index][f];
+
+	std::cout << "\n\n\tNormalized features: ";
+	for (int f = 0; f < number_of_features; f++)
+		std::cout << "\n\t\t" << feature_names[f] << " - " << all_features_normalized[random_index][f];
+
+	std::cout << "\n\n\tActual log-transformed value of " << target_name << ": " << log_transformed_target_values[random_index]
+		<< "\n\tActual value of " << target_name << ": " << target_values[random_index];
+
+	double prediction = neural_network->calculate_prediction(all_features_normalized[random_index]);
+	std::cout << "\n\n\tPredicted log-transformed value of " << target_name << ": " << prediction
+		<< "\n\tPredicted actual value of " << target_name << ": " << pow(e, prediction) - 1 << "\n";
 }
 
 double* input_new_features(std::string* feature_names, bool* not_normalize, int number_of_features)
@@ -41,29 +181,15 @@ double* input_new_features(std::string* feature_names, bool* not_normalize, int 
 }
 
 // regenerate the neural network with a new batch size, as the batch size cannot be dynamically changed due to const qualifiers
-void update_batch_size_and_regen_new_neural_network(NeuralNetwork*& neural_network, const int* number_of_neurons_each_hidden_layer,
-	int net_number_of_neurons_in_hidden_layers, int number_of_hidden_layers, int number_of_features, 
-	std::string weights_and_biases_file_path, std::string means_and_vars_file_path, std::string scales_and_shifts_file_path, 
-	int number_of_samples)
+void input_batch_size(int& new_batch_size, int number_of_samples, bool using_all_samples)
 {
-	double learning_rate = 0, regularization_rate = 0;
-	int patience = 0, prompt_epoch = 0;
-
-	// this is for if the pointer isn't pointing to nullptr, meaning that the nn has already been initialized
-	if (neural_network)
-	{
-		learning_rate = neural_network->get_learning_rate();
-		regularization_rate = neural_network->get_regularization_rate();
-		patience = neural_network->get_patience();
-		prompt_epoch = neural_network->get_prompt_epoch();
-	}
-
-	int new_batch_size;
+	// if using all samples in the next training, then max batch size is all of the samples
+	// else, then all samples except the size of the cross-validation fold
+	int max_batch_size = using_all_samples ? number_of_samples : number_of_samples / 5 * 4;
 
 	std::cout << "\n\tPlease enter an integer value for the new ***batch size***; it must be less than or equal to " 
-		<< number_of_samples / 5 * 4 << ": ";
-	// the last condition is considering when the batch size is too large for a current training fold 
-	// (i.e., if there are 5001 training samples, then you can only use 4000 for when there are 1001 in the last cv training fold)
+		<< max_batch_size << ": ";
+
 	while (true)
 	{
 		if (!(std::cin >> new_batch_size))
@@ -83,26 +209,19 @@ void update_batch_size_and_regen_new_neural_network(NeuralNetwork*& neural_netwo
 			continue;
 		}
 
-		if (new_batch_size <= 0 || new_batch_size > number_of_samples / 5 * 4)
+		if (new_batch_size <= 0 || new_batch_size > max_batch_size)
 		{
 			std::cout << "\t[ERROR] Please do not enter  numbers less than or equal to 0, or numbers greater than " 
-				<< number_of_samples / 5 * 4 << " for the new ***batch size***: ";
+				<< max_batch_size << " for the new ***batch size***: ";
 			continue;
 		}
-
+		
 		break;
 	}
-
-	delete neural_network;
-	neural_network = new NeuralNetwork(number_of_neurons_each_hidden_layer, net_number_of_neurons_in_hidden_layers, number_of_hidden_layers,
-		number_of_features, new_batch_size, learning_rate, regularization_rate, patience, prompt_epoch,
-		weights_and_biases_file_path, means_and_vars_file_path, scales_and_shifts_file_path);
 }
 
-// input customizable parameters within the nn
-void input_parameter_rates(NeuralNetwork* neural_network)
+void input_rates(double& new_learning_rate, double& new_regularization_rate, int& new_patience, int& new_number_of_epochs)
 {
-	// lambda for getting an integer value from the user
 	auto get_a_positive_integer = [](std::string prompt_message, std::string error_message) -> int
 		{
 			int temp_int;
@@ -118,7 +237,7 @@ void input_parameter_rates(NeuralNetwork* neural_network)
 				}
 
 				// check for remaining characters in the input buffer
-				if (std::cin.peek() != '\n') 
+				if (std::cin.peek() != '\n')
 				{
 					std::cin.clear();
 					std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
@@ -127,7 +246,7 @@ void input_parameter_rates(NeuralNetwork* neural_network)
 				}
 
 				// Validate value range
-				if (temp_int <= 0) 
+				if (temp_int <= 0)
 				{
 					std::cout << error_message;
 					continue;
@@ -165,28 +284,58 @@ void input_parameter_rates(NeuralNetwork* neural_network)
 			return temp_double;
 		};
 
-	double new_learning_rate = get_a_positive_double("\n\tPlease enter a double value for the new ***learning rate***: ",
+	new_learning_rate = get_a_positive_double("\n\tPlease enter a double value for the new ***learning rate***: ",
 		"\t[ERROR] Please do not enter characters or negative numbers for the new*** learning rate***: ");
-	neural_network->set_learning_rate(new_learning_rate);
 
 	generate_border_line();
 
-	double new_regularization_rate = get_a_positive_double("\n\tPlease enter a double value for the new ***regularization rate***: ",
+	new_regularization_rate = get_a_positive_double("\n\tPlease enter a double value for the new ***regularization rate***: ",
 		"\t[ERROR] Please do not enter characters or negative numbers for the new*** regularization rate***: ");
-	neural_network->set_regularization_rate(new_regularization_rate);
 
 	generate_border_line();
 
-	int new_patience = get_a_positive_integer("\n\tPlease enter an integer value for the ***patience*** of five-fold training: ",
+	new_patience = get_a_positive_integer("\n\tPlease enter an integer value for the ***patience*** of five-fold training: ",
 		"\t[ERROR] Please do not enter characters, double values, or numbers less than or equal to 0 for the new ***patience***: ");
-	neural_network->set_patience(new_patience);
 
 	generate_border_line();
 
-	int new_prompt_epoch = get_a_positive_integer("\n\tPlease enter an integer value for the ***number of epochs before prompting to stop training for a fold***: ",
-		"\t[ERROR] Please do not enter characters, double values, or numbers less than or equal to 0 for the new ***prompt epoch***: ");
-	neural_network->set_prompt_epoch(new_prompt_epoch);
+	new_number_of_epochs = get_a_positive_integer("\n\tPlease enter an integer value for the ***number of epochs before prompting to stop training for a fold***: ",
+		"\t[ERROR] Please do not enter characters, double values, or numbers less than or equal to 0 for the new ***number of epochs***: ");
+}
 
+// randomize the order of the training samples
+void randomize_training_samples(double** training_features, double* target_values, double* log_transformed_target_values,
+	int* sample_numbers, int number_of_samples)
+{
+	int random_index;
+	double temp_double;
+	double* temp_ptr;
+	int temp_int;
+
+	for (int current_index = number_of_samples - 1; current_index > 0; current_index--)
+	{
+		random_index = std::rand() % current_index;
+
+		// swap where pointers are directed
+		temp_ptr = training_features[random_index];
+		training_features[random_index] = training_features[current_index];
+		training_features[current_index] = temp_ptr;
+
+		// swap the target values
+		temp_double = target_values[random_index];
+		target_values[random_index] = target_values[current_index];
+		target_values[current_index] = temp_double;
+
+		// swap the log transformed target values
+		temp_double = log_transformed_target_values[random_index];
+		log_transformed_target_values[random_index] = log_transformed_target_values[current_index];
+		log_transformed_target_values[current_index] = temp_double;
+
+		// swap the sample numbers
+		temp_int = sample_numbers[random_index];
+		sample_numbers[random_index] = sample_numbers[current_index];
+		sample_numbers[current_index] = temp_int;
+	}
 }
 
 // update the weights and biases

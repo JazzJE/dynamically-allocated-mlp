@@ -71,7 +71,7 @@ void NeuralNetwork::generate_weights_and_biases_file(std::string weights_and_bia
 {
 	std::fstream weights_and_biases_file(weights_and_biases_file_path, std::ios::out | std::ios::trunc);
 
-	generate_weights_and_biases_for_layer(weights_and_biases_file, network_number_of_features, number_of_neurons_each_hidden_layer[0]);
+	generate_weights_and_biases_for_layer(weights_and_biases_file, number_of_features, number_of_neurons_each_hidden_layer[0]);
 
 	for (int l = 1; l < number_of_hidden_layers; l++)
 		generate_weights_and_biases_for_layer(weights_and_biases_file, number_of_neurons_each_hidden_layer[l - 1],
@@ -187,7 +187,7 @@ int NeuralNetwork::find_error_weights_and_biases_file(std::fstream& weights_and_
 			field_count++;
 		}
 
-		if (field_count != network_number_of_features + 1) return line_error;
+		if (field_count != number_of_features + 1) return line_error;
 	}
 
 	// each subsequent layer
@@ -376,7 +376,7 @@ void NeuralNetwork::parse_weights_and_biases_file(std::string weights_and_biases
 {
 	std::fstream weights_and_biases_file(weights_and_biases_file_path, std::ios::in);
 
-	parse_weights_and_biases_for_layer(weights_and_biases_file, network_number_of_features,
+	parse_weights_and_biases_for_layer(weights_and_biases_file, number_of_features,
 		number_of_neurons_each_hidden_layer[0], 0);
 
 	for (int l = 1; l < number_of_hidden_layers; l++)

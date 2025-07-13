@@ -18,7 +18,7 @@ set(SOURCES
     src/MemoryFunctions.cpp
     src/MenuFunctions.cpp
     src/StatisticsFunctions.cpp
-    src/BestStateLoader.cpp
+    src/SavedStateLoader.cpp
     src/NNInitAndValidation.cpp
 )
 
@@ -31,6 +31,7 @@ set(HEADERS
     include/MemoryFunctions.h
     include/MenuFunctions.h
     include/StatisticsFunctions.h
+    
 )
 
 # Create executable

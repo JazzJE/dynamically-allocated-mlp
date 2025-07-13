@@ -6,9 +6,8 @@ class OutputLayer : public DenseLayer
 {
 public:
 	
-	OutputLayer(double** layer_weights, double* layer_biases,
-		double** training_layer_activation_arrays, double* layer_activation_array, int batch_size, int number_of_features,
-		int number_of_neurons, double* learning_rate, double* regularization_rate);
+	OutputLayer(double** layer_weights, double* layer_biases, double* layer_activation_array, int number_of_features, int number_of_neurons,
+		double* learning_rate, double* regularization_rate);
 
 	// delete the output neuron array
 	~OutputLayer();

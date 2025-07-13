@@ -153,9 +153,11 @@ int main()
 		randomize_training_samples(training_features, target_values, log_transformed_target_values, sample_numbers, number_of_samples);
 
 	// calculate normalized features of all the samples; will be used for testing predictions
-	double* all_samples_means = calculate_features_means(training_features, not_normalize, number_of_features, number_of_samples);
-	double* all_samples_variances = calculate_features_variances(training_features, not_normalize, all_samples_means, number_of_features, 
+	double* all_features_means = calculate_features_means(training_features, not_normalize, number_of_features, number_of_samples);
+	double* all_features_variances = calculate_features_variances(training_features, not_normalize, all_features_means, number_of_features, 
 		number_of_samples);
+	double** all_features_normalized = calculate_normalized_features(training_features, not_normalize, number_of_samples,
+		number_of_features, all_features_means, all_features_variances);
 
 	dataset_file.close();
 
@@ -170,65 +172,42 @@ int main()
 	std::string scales_and_shifts_file_path = nn_state_file_path.generic_string() + "scales_and_shifts.csv";
 
 	char option;
-	NeuralNetwork* neural_network = nullptr;
+	NeuralNetwork* const neural_network = new NeuralNetwork(number_of_neurons_each_hidden_layer, net_number_of_neurons_in_hidden_layers,
+		number_of_hidden_layers, number_of_features, weights_and_biases_file_path, means_and_vars_file_path, scales_and_shifts_file_path);
 
-	std::cout << "\nHello! Welcome to my hard-coded neural network program.\n"
-		<< "\nBefore beginning, please give initial values for the following parameters.\n\n";
-
-	// ask user for initial values
-	generate_border_line();
-	update_batch_size_and_regen_new_neural_network(neural_network, number_of_neurons_each_hidden_layer, 
-		net_number_of_neurons_in_hidden_layers, number_of_hidden_layers, number_of_features, weights_and_biases_file_path,
-		means_and_vars_file_path, scales_and_shifts_file_path, number_of_samples);
-	generate_border_line();
-	input_parameter_rates(neural_network);
-	generate_border_line();
+	std::cout << "\nHello! Welcome to my hard-coded neural network program.\n";
 
 	clear_screen();
 
 	while (true)
 	{
-		std::cout << "Option Menu:"
-			<< "\n\t1. Train neural network (five-fold, mini-batch gradient descent)"
-			<< "\n\t2. Randomize order of training samples"
-			<< "\n\t3. Predict a value using provided sample features"
-			<< "\n\t4. Predict a value using a random sample"
-			<< "\n\t5. Save the latest, best neural network state in memory"
-			<< "\n\t6. Change training parameters/options"
-			<< "\n\t7. Change the batch size of the neural network (everything will be the same but the batch size)"
-			<< "\n\t8. Exit program (will not save the program)"
-			<< "\nPlease select an option: ";
-		std::cin >> option;
-
-		while (option < '1' || option > '8' || std::cin.peek() != '\n')
-		{
-			// clear buffer if user inputted a string with a valid number
-			if (std::cin.peek() != '\n')
-			{
-				std::cin.clear(); // clear error flags
-                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // ignore the key buffer bad input
-			}
-
-			std::cout << "[ERROR] Please enter a valid input (1-8): ";
-			std::cin >> option;
-		}
+		MenuOptions selected_option = get_option();
 
 		// end the program if selected
-		if (option == '8') break;
+		if (selected_option == MenuOptions::EXIT_PROGRAM_OPTION) break;
 
 		generate_border_line();
 
-		switch (option)
+		switch (selected_option)
 		{
-		case '1': // train neural network
 
-			std::cout << "\n\tTraining your network...";
-			neural_network->five_fold_train(training_features, not_normalize, log_transformed_target_values, number_of_samples);
-			std::cout << "\n\n\tDone!\n";
+		case MenuOptions::ALL_SAMPLE_TRAIN_OPTION:
 
+			all_sample_train_network_option(neural_network, all_features_normalized, log_transformed_target_values, number_of_samples);
 			break;
 
-		case '2': // randomize order of training samples again
+		case MenuOptions::FIVE_FOLD_TRAIN_OPTION:
+
+			five_fold_train_network_option(neural_network, training_features, not_normalize, log_transformed_target_values, number_of_samples);
+			break;
+
+		case MenuOptions::SAVE_NETWORK_STATE_OPTION: // save current neural network
+
+			save_neural_network_state(neural_network, weights_and_biases_file_path, means_and_vars_file_path, scales_and_shifts_file_path,
+				number_of_neurons_each_hidden_layer, number_of_hidden_layers, number_of_features, net_number_of_neurons_in_hidden_layers);
+			break; 
+
+		case MenuOptions::RANDOMIZE_SAMPLES_OPTION: // change learning and regularization parameters
 
 			std::cout << "\n\tRandomizing samples' order...";
 			for (int s = 0; s < number_of_shuffles; s++)
@@ -237,90 +216,16 @@ int main()
 
 			break;
 
-		case '3': // predict a value provided user features
-
-		{
-
-			double* new_features = input_new_features(feature_names, not_normalize, number_of_features);
-
-			std::cout << "\n\tProvided these features: ";
-			for (int f = 0; f < number_of_features; f++)
-				std::cout << "\n\t\t" << feature_names[f] << " - " << new_features[f];
-
-			double* normalized_features = calculate_normalized_features(new_features, not_normalize, number_of_features,
-				all_samples_means, all_samples_variances);
-
-			std::cout << "\n\n\tNormalized features: ";
-			for (int f = 0; f < number_of_features; f++)
-				std::cout << "\n\t\t" << feature_names[f] << " - " << normalized_features[f];
-
-			double prediction = neural_network->calculate_prediction(normalized_features);
-			std::cout << "\n\n\tPredicted log-transformed value of " << target_name << ": " << prediction 
-				<< "\n\tPredicted actual value of " << target_name << ": " << pow(e, prediction) - 1 << "\n";
-
-			delete[] new_features;
-			delete[] normalized_features;
-
-			break;
-		}
-
-		case '4': // predict a value with a random sample
-
-		{
-			int random_index = std::rand() % number_of_samples;
-			std::cout << "\n\tProvided these features for sample #" << sample_numbers[random_index] << " within your dataset: ";
-			for (int f = 0; f < number_of_features; f++)
-				std::cout << "\n\t\t" << feature_names[f] << " - " << training_features[random_index][f];
-
-			double* normalized_features = calculate_normalized_features(training_features[random_index], not_normalize, number_of_features,
-				all_samples_means, all_samples_variances);
-
-			std::cout << "\n\n\tNormalized features: ";
-			for (int f = 0; f < number_of_features; f++)
-				std::cout << "\n\t\t" << feature_names[f] << " - " << normalized_features[f];
-
-			std::cout << "\n\n\tActual log-transformed value of " << target_name << ": " << log_transformed_target_values[random_index]
-				<< "\n\tActual value of " << target_name << ": " << target_values[random_index];
-
-			double prediction = neural_network->calculate_prediction(normalized_features);
-			std::cout << "\n\n\tPredicted log-transformed value of " << target_name << ": " << prediction
-				<< "\n\tPredicted actual value of " << target_name << ": " << pow(e, prediction) - 1 << "\n";
-
-			delete[] normalized_features;
-
-			break;
-		}
-
-		case '5': // save current neural network
-
-			std::cout << "\n\n\tUpdating the " << weights_and_biases_file_path << " file...";
-			update_weights_and_biases_file(weights_and_biases_file_path, neural_network->get_network_weights(), 
-				neural_network->get_network_biases(), number_of_neurons_each_hidden_layer, number_of_hidden_layers, 
-				number_of_features);
-
-			std::cout << "\n\tUpdating the " << means_and_vars_file_path << " file...";
-			update_mv_or_ss_file(means_and_vars_file_path, neural_network->get_network_running_means(), 
-				neural_network->get_network_running_variances(), net_number_of_neurons_in_hidden_layers);
-
-			std::cout << "\n\tUpdating the " << scales_and_shifts_file_path << " file...";
-			update_mv_or_ss_file(scales_and_shifts_file_path, neural_network->get_network_scales(),
-				neural_network->get_network_shifts(), net_number_of_neurons_in_hidden_layers);
+		case MenuOptions::PREDICT_PROVIDED_FEATURES_OPTION: // change the batch size of the nn and regen it due to const qualifiers
 			
-			std::cout << "\n\n\tDone!\n";
-
-			break; 
-
-		case '6': // change learning and regularization parameters
-
-			input_parameter_rates(neural_network);
-
+			predict_with_provided_features_option(neural_network, feature_names, target_name, all_features_means, all_features_variances,
+				not_normalize, number_of_features);
 			break;
 
-		case '7': // change the batch size of the nn and regen it due to const qualifiers
+		case MenuOptions::PREDICT_RANDOM_FEATURES_OPTION:
 
-			update_batch_size_and_regen_new_neural_network(neural_network, number_of_neurons_each_hidden_layer,
-				net_number_of_neurons_in_hidden_layers, number_of_hidden_layers, number_of_features, weights_and_biases_file_path,
-				means_and_vars_file_path, scales_and_shifts_file_path, number_of_samples);
+			predict_with_random_features_option(neural_network, feature_names, target_name, training_features, all_features_normalized, 
+				target_values, log_transformed_target_values, sample_numbers, number_of_samples, number_of_features);
 
 		}
 

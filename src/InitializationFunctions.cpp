@@ -122,41 +122,6 @@ int find_error_dataset_file(std::fstream& dataset_file, int number_of_features)
 
 // miscellaneous methods
 
-	// randomize the order of the training samples
-void randomize_training_samples(double** training_features, double* target_values, double* log_transformed_target_values, 
-	int* sample_numbers, int number_of_samples)
-{
-	int random_index;
-	double temp_double;
-	double* temp_ptr;
-	int temp_int;
-
-	for (int current_index = number_of_samples - 1; current_index > 0; current_index--)
-	{
-		random_index = std::rand() % current_index;
-
-		// swap where pointers are directed
-		temp_ptr = training_features[random_index];
-		training_features[random_index] = training_features[current_index];
-		training_features[current_index] = temp_ptr;
-
-		// swap the target values
-		temp_double = target_values[random_index];
-		target_values[random_index] = target_values[current_index];
-		target_values[current_index] = temp_double;
-
-		// swap the log transformed target values
-		temp_double = log_transformed_target_values[random_index];
-		log_transformed_target_values[random_index] = log_transformed_target_values[current_index];
-		log_transformed_target_values[current_index] = temp_double;
-
-		// swap the sample numbers
-		temp_int = sample_numbers[random_index];
-		sample_numbers[random_index] = sample_numbers[current_index];
-		sample_numbers[current_index] = temp_int;
-	}
-}
-
 	// count the number of samples in the file
 int count_number_of_samples(std::string dataset_file_name)
 {

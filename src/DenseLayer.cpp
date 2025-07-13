@@ -3,44 +3,35 @@
 constexpr double epsilon = 1e-5;
 
 DenseLayer::DenseLayer(double** layer_weights, double* layer_biases, double* running_means, double* running_variances, double* scales,
-	double* shifts, double** training_layer_activation_values, double* layer_activation_array, int batch_size, int number_of_features,
-	int number_of_neurons, double* layer_learning_rate, double* layer_regularization_rate) :
+	double* shifts, double* layer_activation_array, int number_of_features, int number_of_neurons, double* layer_learning_rate, 
+	double* layer_regularization_rate) :
 
-	number_of_features(number_of_features), number_of_neurons(number_of_neurons), batch_size(batch_size), layer_weights(layer_weights),
+	number_of_features(number_of_features), number_of_neurons(number_of_neurons), layer_weights(layer_weights),
 	layer_biases(layer_biases), running_means(running_means), running_variances(running_variances), scales(scales), shifts(shifts),
 
 	// assign the activation arrays/output arrays that we are outputting to as the input arrays/feature arrays of the n + 1th layer
-	training_activation_arrays(training_layer_activation_values),
 	activation_array(layer_activation_array),
 
 	// create new inputs that can then be used for the n - 1th layer
-	training_input_features(allocate_memory_for_2D_array(batch_size, number_of_features)),
 	input_features(new double[number_of_features]),
 
-	// allocate memory for linear transformation values and derived values; used primarily for training
-	linear_transform_derived_values(allocate_memory_for_2D_array(number_of_neurons, batch_size)),
-	affine_transform_derived_values(allocate_memory_for_2D_array(number_of_neurons, batch_size)),
-
-	// for training computation and eventually gradient descent
-	linear_transform_values(allocate_memory_for_2D_array(number_of_neurons, batch_size)),
-	normalized_values(allocate_memory_for_2D_array(number_of_neurons, batch_size)),
-
-	// for the batch normalization formula
 	training_means(new double[number_of_neurons]),
 	training_variances(new double[number_of_neurons]),
 
 	learning_rate(layer_learning_rate),
-	regularization_rate(layer_regularization_rate)
+	regularization_rate(layer_regularization_rate),
 
+	// all things related to batch size will initially be set to nothing; the user will update the batch size of the nn
+	training_activation_arrays(nullptr), training_input_features(nullptr), linear_transform_derived_values(nullptr), 
+	affine_transform_derived_values(nullptr), normalized_values(nullptr), linear_transform_values(nullptr), batch_size(0)
 { }
 
 // the neural network will delete everything else, and the activation arrays of this lth layer are the input features of the l + 1th layer,
 // so do not need to deallocate the output features up until the output layer
 DenseLayer::~DenseLayer()
 {
-	deallocate_memory_for_2D_array(training_input_features, batch_size);
 	delete[] input_features;
-
+	deallocate_memory_for_2D_array(training_input_features, batch_size);
 	deallocate_memory_for_2D_array(linear_transform_derived_values, number_of_neurons);
 	deallocate_memory_for_2D_array(affine_transform_derived_values, number_of_neurons);
 	deallocate_memory_for_2D_array(linear_transform_values, number_of_neurons);
@@ -48,6 +39,27 @@ DenseLayer::~DenseLayer()
 
 	delete[] training_means;
 	delete[] training_variances;
+}
+
+// updating the batch size of a layer requires a lot of alterations to dynamically allocated memory
+void DenseLayer::update_arrays_using_batch_size(int new_batch_size, double** new_training_activation_arrays)
+{
+	// delete all dynamically allocated memory that relied on batch size
+	deallocate_memory_for_2D_array(training_input_features, batch_size);
+	deallocate_memory_for_2D_array(linear_transform_derived_values, number_of_neurons);
+	deallocate_memory_for_2D_array(affine_transform_derived_values, number_of_neurons);
+	deallocate_memory_for_2D_array(linear_transform_values, number_of_neurons);
+	deallocate_memory_for_2D_array(normalized_values, number_of_neurons);
+
+	// recreate the arrays that relied on batch size but w/ the new batch size
+	training_input_features = allocate_memory_for_2D_array(new_batch_size, number_of_features);
+	linear_transform_derived_values = allocate_memory_for_2D_array(number_of_neurons, new_batch_size);
+	affine_transform_derived_values = allocate_memory_for_2D_array(number_of_neurons, new_batch_size);
+	linear_transform_values = allocate_memory_for_2D_array(number_of_neurons, new_batch_size);
+	normalized_values = allocate_memory_for_2D_array(number_of_neurons, new_batch_size);
+
+	training_activation_arrays = new_training_activation_arrays;
+	batch_size = new_batch_size;
 }
 
 // methods for normal computation and prediction

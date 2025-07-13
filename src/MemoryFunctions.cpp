@@ -76,6 +76,8 @@ void deallocate_memory_for_weights(double*** weights, const int* number_of_neuro
 
 		delete[] weights;
 	}
+
+	weights = nullptr;
 }
 
 // deallocate memory in provided bias pointer
@@ -91,6 +93,8 @@ void deallocate_memory_for_biases(double** biases, int number_of_hidden_layers)
 
 		delete[] biases;
 	}
+
+	biases = nullptr;
 }
 
 // deallocate memory for training features
@@ -103,4 +107,6 @@ void deallocate_memory_for_2D_array(double** twoD_array, int number_of_rows)
 
 		delete[] twoD_array;
 	}
+
+	twoD_array = nullptr;
 }

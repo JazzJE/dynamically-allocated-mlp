@@ -1,7 +1,7 @@
 #pragma once
-#include "MemoryFunctions.h"
 #include <cmath>
 #include <omp.h>
+
 class DenseLayer
 {
 protected:

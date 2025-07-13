@@ -1,4 +1,9 @@
 #include "NeuralNetwork.h"
+#include "DenseLayer.h"
+#include "OutputLayer.h"
+#include "MemoryFunctions.h"
+#include "MenuFunctions.h"
+#include "StatisticsFunctions.h"
 
 // initialize each hidden layer with their...
 		// weights,
@@ -21,7 +26,7 @@ NeuralNetwork::NeuralNetwork(const int* number_of_neurons_each_hidden_layer, int
 	// this will be used to save and reload states of the neural network
 	// saved state loader will save the best state of the nn when the mse is lower than the best mse
 	ss_loader(network_weights, network_biases, network_running_means, network_running_variances, network_scales, network_shifts,
-		get_number_of_neurons_each_hidden_layer(), number_of_hidden_layers, net_number_of_neurons_in_hidden_layers, 
+		this->get_number_of_neurons_each_hidden_layer(), number_of_hidden_layers, net_number_of_neurons_in_hidden_layers, 
 		number_of_features),
 
 	// dynamic memory allocation of key components
@@ -130,17 +135,18 @@ void NeuralNetwork::update_arrays_using_batch_size()
 }
 
 // train the neural network on five different folds of the training set
-void NeuralNetwork::five_fold_train(double** training_features, bool* not_normalize, double* log_transformed_target_values, int number_of_samples)
-{
+void NeuralNetwork::k_fold_train(double** training_features, bool* not_normalize, double* log_transformed_target_values, 
+	int number_of_samples, int number_of_folds)
+{	
 	// save the initial state of the neural network, which all folds will reset to when patience is reached
 	ss_loader.save_current_state();
 
 	// lower refers to the index of the lower range of the cross-validation fold, while higher refers to the index of the higher range
 	// of the cv fold
 	int lower_cross_validation_index, higher_cross_validation_index;
-	int samples_per_fold = number_of_samples / 5;
+	int samples_per_fold = number_of_samples / number_of_folds;
 
-	for (int i = 0; i < 4; i++)
+	for (int i = 0; i < number_of_folds - 1; i++)
 	{
 		std::cout << "\n\n\tFold #" << i + 1 << ": ";
 
@@ -167,10 +173,10 @@ void NeuralNetwork::five_fold_train(double** training_features, bool* not_normal
 		deallocate_memory_for_2D_array(training_features_normalized, number_of_samples);
 	}
 
-	std::cout << "\n\n\tFold #5: ";
+	std::cout << "\n\n\tFold #" << number_of_folds << ": ";
 
 	// use all the remaining training samples for the kast cross validation set
-	lower_cross_validation_index = 4 * samples_per_fold;
+	lower_cross_validation_index = (number_of_folds - 1) * samples_per_fold;
 	higher_cross_validation_index = number_of_samples - 1;
 
 	double* training_means = calculate_features_means(training_features, not_normalize, number_of_features, number_of_samples, 
@@ -303,7 +309,7 @@ double NeuralNetwork::early_stop_training(double** training_features_normalized,
 			failed_epochs = 0;
 			std::cout << "\n\n\t\tTraining epoch #" << epoch_number << ": Current MSE - " << current_mse << ", Best MSE - " << best_mse 
 				<< "\n\t\t\tCurrent cross-validation MSE is less than best cross-validation MSE. Failed epochs is now 0. "
-				<< "Updating best MSE for this fold...";
+				<< "Updating best MSE...";
 			best_mse = current_mse;
 		}
 

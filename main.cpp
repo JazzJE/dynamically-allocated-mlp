@@ -40,7 +40,6 @@
 #include <iomanip>
 #include <fstream>
 #include <random>
-#include <cmath>
 #include <cstdlib>
 #include <string>
 #include <filesystem>
@@ -51,9 +50,6 @@
 #include "DenseLayer.h"
 #include "NeuralNetwork.h"
 #include "StatisticsFunctions.h"
-
-// euler's number
-const double e = exp(1.0);
 
 namespace fs = std::filesystem;
 

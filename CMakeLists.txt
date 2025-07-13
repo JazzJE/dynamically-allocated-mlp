@@ -31,7 +31,7 @@ set(HEADERS
     include/MemoryFunctions.h
     include/MenuFunctions.h
     include/StatisticsFunctions.h
-    
+    include/Constants.h
 )
 
 # Create executable

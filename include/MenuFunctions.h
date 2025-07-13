@@ -1,11 +1,12 @@
 #pragma once
-#include "NeuralNetwork.h"
 #include <iostream>
 #include <fstream>
 #include <iomanip>
 #include <string>
 #include <limits>
+#include <cmath>
 
+// all the options that can be selected by user
 enum MenuOptions
 {
 	FIRST_OPTION = '1',
@@ -20,9 +21,12 @@ enum MenuOptions
 	EXIT_PROGRAM_OPTION = '7',
 };
 
+class NeuralNetwork;
+
 MenuOptions get_option();
 void generate_border_line();
 
+// menu-selected options
 void save_neural_network_state(NeuralNetwork* neural_network, std::string weights_and_biases_file_path, std::string means_and_vars_file_path,
 	std::string scales_and_shifts_file_path, const int* number_of_neurons_each_hidden_layer, int number_of_hidden_layers, 
 	int number_of_features, int net_number_of_neurons_in_hidden_layers);
@@ -36,9 +40,11 @@ void predict_with_random_features_option(NeuralNetwork* neural_network, std::str
 	double** training_features, double** all_features_normalized, double* target_values, double* log_transformed_target_values,
 	int* sample_numbers, int number_of_samples, int number_of_features);
 
+// helper methods
 double* input_new_features(std::string* feature_names, bool* not_normalize, int number_of_features);
-void input_batch_size(int& new_batch_size, int number_of_samples, bool using_all_samples);
+void input_batch_size(int& new_batch_size, int number_of_samples, bool using_all_samples, int number_of_folds = -1);
 void input_rates(double& new_learning_rate, double& new_regularization_rate, int& new_patience, int& new_number_of_epochs);
+void input_number_of_folds(int& number_of_folds);
 void randomize_training_samples(double** training_features, double* target_values, double* log_transformed_target_values,
 	int* sample_numbers, int number_of_samples);
 void update_weights_and_biases_file(std::string weights_and_biases_file_name, double*** weights, double** biases, 

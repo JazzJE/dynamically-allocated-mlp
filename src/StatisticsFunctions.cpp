@@ -1,6 +1,6 @@
 #include "StatisticsFunctions.h"
-
-constexpr double epsilon = 1e-5;
+#include "MemoryFunctions.h"
+#include "Constants.h"
 
 // calculating means of a provided range
 
@@ -95,7 +95,7 @@ double** calculate_normalized_features(double** sample_features, bool* not_norma
 				continue;
 			}
 
-			normalized_features[t][f] = ((sample_features[t][f] - means_array[f]) / (sqrt(variances_array[f] + epsilon)));
+			normalized_features[t][f] = ((sample_features[t][f] - means_array[f]) / (sqrt(variances_array[f] + Constants::epsilon)));
 		}
 
 	return normalized_features;
@@ -115,7 +115,7 @@ double* calculate_normalized_features(double* sample_features, bool* not_normali
 			continue;
 		}
 
-		normalized_features[f] = ((sample_features[f] - means_array[f]) / (sqrt(variances_array[f] + epsilon)));
+		normalized_features[f] = ((sample_features[f] - means_array[f]) / (sqrt(variances_array[f] + Constants::epsilon)));
 	}
 
 	return normalized_features;

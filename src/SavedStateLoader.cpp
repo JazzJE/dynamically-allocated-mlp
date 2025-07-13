@@ -1,4 +1,5 @@
 #include "NeuralNetwork.h"
+#include "MemoryFunctions.h"
 
 // initialize with the network's pointers
 NeuralNetwork::SavedStateLoader::SavedStateLoader(double*** network_weights, double** network_biases, double* network_running_means,

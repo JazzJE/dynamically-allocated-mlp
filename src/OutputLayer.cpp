@@ -1,4 +1,6 @@
 #include "OutputLayer.h"
+#include "MemoryFunctions.h"
+
 OutputLayer::OutputLayer(double** layer_weights, double* layer_biases, double* layer_activation_array, int number_of_features, 
 	int number_of_neurons, double* layer_learning_rate, double* layer_regularization_rate) :
 

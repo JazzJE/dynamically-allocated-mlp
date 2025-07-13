@@ -1,4 +1,7 @@
 #include "MenuFunctions.h"
+#include "NeuralNetwork.h"
+#include "StatisticsFunctions.h"
+#include "Constants.h"
 
 MenuOptions get_option()
 {
@@ -61,6 +64,9 @@ void all_sample_train_network_option(NeuralNetwork* neural_network, double** all
 	double new_learning_rate, new_regularization_rate;
 	int new_patience, new_number_of_epochs;
 	input_rates(new_learning_rate, new_regularization_rate, new_patience, new_number_of_epochs);
+
+	generate_border_line();
+
 	int new_batch_size;
 	input_batch_size(new_batch_size, number_of_samples, using_all_samples);
 
@@ -69,6 +75,8 @@ void all_sample_train_network_option(NeuralNetwork* neural_network, double** all
 	neural_network->set_patience(new_patience);
 	neural_network->set_number_of_epochs(new_number_of_epochs);
 	neural_network->set_batch_size(new_batch_size);
+
+	generate_border_line();
 
 	std::cout << "\n\tTraining your network on all samples...";
 	neural_network->all_sample_train(all_features_normalized, log_transformed_target_values, number_of_samples);
@@ -85,9 +93,19 @@ void five_fold_train_network_option(NeuralNetwork* neural_network, double** trai
 	double new_learning_rate, new_regularization_rate;
 	int new_patience, new_number_of_epochs;
 	input_rates(new_learning_rate, new_regularization_rate, new_patience, new_number_of_epochs);
-	int new_batch_size;
-	input_batch_size(new_batch_size, number_of_samples, using_all_samples);
 
+	generate_border_line();
+
+	int number_of_folds;
+	input_number_of_folds(number_of_folds);
+
+	generate_border_line();
+
+	int new_batch_size;
+	input_batch_size(new_batch_size, number_of_samples, using_all_samples, number_of_folds);
+
+	generate_border_line();
+	
 	neural_network->set_learning_rate(new_learning_rate);
 	neural_network->set_regularization_rate(new_regularization_rate);
 	neural_network->set_patience(new_patience);
@@ -95,10 +113,11 @@ void five_fold_train_network_option(NeuralNetwork* neural_network, double** trai
 	neural_network->set_batch_size(new_batch_size);
 
 	std::cout << "\n\tTraining your network on all samples...";
-	neural_network->five_fold_train(training_features, not_normalize, log_transformed_target_values, number_of_samples);
+	neural_network->k_fold_train(training_features, not_normalize, log_transformed_target_values, number_of_samples, number_of_folds);
 	std::cout << "\n\n\tDone!\n";
 }
 
+// have user input values for each feature, normalize those features, then output a result
 void predict_with_provided_features_option(NeuralNetwork* neural_network, std::string* feature_names, std::string target_name,
 	double* all_features_means, double* all_features_variances, bool* not_normalize, int number_of_features)
 {
@@ -117,16 +136,17 @@ void predict_with_provided_features_option(NeuralNetwork* neural_network, std::s
 
 	double prediction = neural_network->calculate_prediction(normalized_features);
 	std::cout << "\n\n\tPredicted log-transformed value of " << target_name << ": " << prediction
-		<< "\n\tPredicted actual value of " << target_name << ": " << pow(e, prediction) - 1 << "\n";
+		<< "\n\tPredicted actual value of " << target_name << ": " << pow(Constants::euler_number, prediction) - 1 << "\n";
 
 	delete[] new_features;
 	delete[] normalized_features;
 }
 
+// pick a random sample's features and get its predicted values, as well as original actual values for comparison
 void predict_with_random_features_option(NeuralNetwork* neural_network, std::string* feature_names, std::string target_name, 
 	double** training_features, double** all_features_normalized, double* target_values, double* log_transformed_target_values,
 	int* sample_numbers, int number_of_samples, int number_of_features)
-{
+{	
 	int random_index = std::rand() % number_of_samples;
 	std::cout << "\n\tProvided these features for sample #" << sample_numbers[random_index] << " within your dataset: ";
 	for (int f = 0; f < number_of_features; f++)
@@ -141,9 +161,10 @@ void predict_with_random_features_option(NeuralNetwork* neural_network, std::str
 
 	double prediction = neural_network->calculate_prediction(all_features_normalized[random_index]);
 	std::cout << "\n\n\tPredicted log-transformed value of " << target_name << ": " << prediction
-		<< "\n\tPredicted actual value of " << target_name << ": " << pow(e, prediction) - 1 << "\n";
+		<< "\n\tPredicted actual value of " << target_name << ": " << pow(Constants::euler_number, prediction) - 1 << "\n";
 }
 
+// create dynamically allocated array of all the features that use will input
 double* input_new_features(std::string* feature_names, bool* not_normalize, int number_of_features)
 {
 	double* input_features = new double[number_of_features];
@@ -180,12 +201,12 @@ double* input_new_features(std::string* feature_names, bool* not_normalize, int 
 	return input_features;
 }
 
-// regenerate the neural network with a new batch size, as the batch size cannot be dynamically changed due to const qualifiers
-void input_batch_size(int& new_batch_size, int number_of_samples, bool using_all_samples)
+// have the user input a new batch size, which will regenerate the neural network's structure based on the new value
+void input_batch_size(int& new_batch_size, int number_of_samples, bool using_all_samples, int number_of_folds)
 {
 	// if using all samples in the next training, then max batch size is all of the samples
 	// else, then all samples except the size of the cross-validation fold
-	int max_batch_size = using_all_samples ? number_of_samples : number_of_samples / 5 * 4;
+	int max_batch_size = using_all_samples ? number_of_samples : number_of_samples / (number_of_folds * (number_of_folds - 1));
 
 	std::cout << "\n\tPlease enter an integer value for the new ***batch size***; it must be less than or equal to " 
 		<< max_batch_size << ": ";
@@ -220,6 +241,7 @@ void input_batch_size(int& new_batch_size, int number_of_samples, bool using_all
 	}
 }
 
+// helper method to input new parameters
 void input_rates(double& new_learning_rate, double& new_regularization_rate, int& new_patience, int& new_number_of_epochs)
 {
 	auto get_a_positive_integer = [](std::string prompt_message, std::string error_message) -> int
@@ -299,8 +321,49 @@ void input_rates(double& new_learning_rate, double& new_regularization_rate, int
 
 	generate_border_line();
 
-	new_number_of_epochs = get_a_positive_integer("\n\tPlease enter an integer value for the ***number of epochs before prompting to stop training for a fold***: ",
+	new_number_of_epochs = get_a_positive_integer("\n\tPlease enter an integer value for the ***number of epochs before stopping training***: ",
 		"\t[ERROR] Please do not enter characters, double values, or numbers less than or equal to 0 for the new ***number of epochs***: ");
+}
+
+// there should be a limit to the number of folds here
+void input_number_of_folds(int& number_of_folds)
+{
+	std::string prompt_message = "\n\tPlease enter an integer value for the ***number of folds*** from " 
+		+ std::to_string(Constants::min_number_of_folds) + " to " + std::to_string(Constants::max_number_of_folds) + ": ";
+	std::string error_message = "\t[ERROR] Please do not enter characters, double values, or numbers less than " 
+		+ std::to_string(Constants::min_number_of_folds) + " or greater than " + std::to_string(Constants::max_number_of_folds) + ": ";
+
+	std::cout << prompt_message;
+	while (true)
+	{
+		if (!(std::cin >> number_of_folds))
+		{
+			std::cin.clear();
+			std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // get rid of bad input
+			std::cout << error_message;
+			continue;
+		}
+
+		// check for remaining characters in the input buffer
+		if (std::cin.peek() != '\n')
+		{
+			std::cin.clear();
+			std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+			std::cout << error_message;
+			continue;
+		}
+
+		// Validate value range and make sure it's a positive value
+		if (number_of_folds < Constants::min_number_of_folds || number_of_folds > Constants::max_number_of_folds)
+		{
+			std::cout << error_message;
+			continue;
+		}
+
+		break;
+	}
+
+	std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // get rid of the new line
 }
 
 // randomize the order of the training samples

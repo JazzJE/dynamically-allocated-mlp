@@ -1,16 +1,15 @@
 #pragma once
-#include "DenseLayer.h"
-#include "OutputLayer.h"
-#include "MemoryFunctions.h"
-#include "MenuFunctions.h"
-#include "StatisticsFunctions.h"
 #include <fstream>
 #include <random>
+#include <limits>
 #include <string>
 #include <sstream>
 #include <iostream>
 #include <unordered_set>
 #include <omp.h>
+
+class DenseLayer;
+class OutputLayer;
 
 class NeuralNetwork
 {
@@ -28,6 +27,7 @@ private:
 	const int* number_of_neurons_each_hidden_layer;
 	const int number_of_hidden_layers;
 
+	// need these for saving state of nn
 	double*** const network_weights;
 	double** const network_biases;
 	double* const network_running_means;
@@ -35,18 +35,18 @@ private:
 	double* const network_scales;
 	double* const network_shifts;
 
-	// controls for the training method
+	// controls for the training
 	double* const learning_rate;
 	double* const regularization_rate;
 
 	DenseLayer** const hidden_layers;
 	OutputLayer* const output_layer;
 	
-	// this will save and write out to the neural network the best state of the program
-	// only really will be used during training
+	// used for saving and loading states of nn
 	class SavedStateLoader
 	{
 	private:
+
 		// store pointers to the network weights, biases, means & variances, and scales & shifts
 		double*** const current_weights;
 		double** const current_biases;
@@ -61,7 +61,9 @@ private:
 		const int net_number_of_neurons_in_hidden_layers;
 		const int number_of_features;
 
-		// store pointers to the best states
+		// store current saved when asked to do so
+		// this MUST go after the above variables since these pointers use them to create adequate memory in the 
+		// constructor initializer list
 		double*** const saved_weights;
 		double** const saved_biases;
 		double* const saved_running_means;
@@ -92,6 +94,8 @@ private:
 		void write_to_current_scales_and_shifts();
 	};
 
+	// get the number of neurons in each hidden layer and turn it into a dynamic array so that the best state loader can access it
+	int* get_number_of_neurons_each_hidden_layer() const;
 	SavedStateLoader ss_loader;
 	
 	// validating the neural network files by essentially just calling all of the validation methods
@@ -114,16 +118,15 @@ private:
 	void parse_weights_and_biases_for_layer(std::fstream& weights_and_biases_file_name, int number_of_features, int number_of_neurons, int layer_index);
 	void parse_mv_or_ss_file(std::string mv_or_ss_file_name, double* means_or_scales, double* variances_or_shifts);
 
-
-	// training components
-	void update_arrays_using_batch_size();
+	// training components and its helper methods
+	double early_stop_training(double** training_features_normalized, double* log_transformed_target_values,
+		int number_of_samples, int lower_cross_validation_index = -1, int higher_cross_validation_index = -1);
 	void train_network(double** normalized_batch_input_features, double* log_transformed_target_values);
 	int* select_random_batch_indices(int number_of_samples, int lower_validation_index, int higher_validation_index); // select random batch samples for training
 	void calculate_training_predictions(double** normalized_batch_input_features) const; // compute the predictions of all the samples; need to do this so we can have the input features of each layer and can thus apply gradient descent
 	void backpropagate_derived_values(double* log_transformed_target_values);
+	void update_arrays_using_batch_size();
 	void update_parameters();
-	double early_stop_training(double** training_features_normalized, double* log_transformed_target_values,
-		int number_of_samples, int lower_cross_validation_index = -1, int higher_cross_validation_index = -1);
 
 public:
 
@@ -134,18 +137,17 @@ public:
 	~NeuralNetwork();
 
 	// split data set into 5 different folds and train the network to as far as it can get
-	// note that the network is reset to its initial state after training on a fold
-	void five_fold_train(double** training_features, bool* not_normalize, double* log_transformed_target_values, int number_of_samples);
+	// note that the network is reset to its initial state after training on each fold
+	void k_fold_train(double** training_features, bool* not_normalize, double* log_transformed_target_values, int number_of_samples,
+		int number_of_folds);
 
-	// this method is explicitly used to train on all samples of the data set and prompt the user to save the nn after training,
-	// which should be used to create final models
+	// this method is explicitly used to train on all samples of the data set
+	// user at the end can decide to continue using the current state for the duration of the program
+	// user must decide to save the neural network state in the menu themselves; this is to allow more flexibility
 	void all_sample_train(double** normalized_training_features, double* log_transformed_target_values, int number_of_samples);
 
 	// calculate a value based on the current weights and biases as well as the input features
 	double calculate_prediction(double* input_features) const;
-
-	// get the number of neurons in each hidden layer and turn it into a dynamic array so that the best state loader can access it
-	int* get_number_of_neurons_each_hidden_layer() const;
 
 	// accessor methods for updating the neural network files
 	double*** get_network_weights() const;
@@ -155,6 +157,7 @@ public:
 	double* get_network_scales() const;
 	double* get_network_shifts() const;
 
+	// setter methods for updating rates
 	void set_learning_rate(double new_learning_rate);
 	void set_regularization_rate(double new_regularization_rate);
 	void set_patience(int new_patience);

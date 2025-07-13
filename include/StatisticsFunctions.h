@@ -1,5 +1,4 @@
 #pragma once
-#include "MemoryFunctions.h"
 #include <cmath>
 #include <iostream>
 

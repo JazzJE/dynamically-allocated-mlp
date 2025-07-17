@@ -117,9 +117,9 @@ int find_error_dataset_file(std::fstream& dataset_file, int number_of_features)
 // miscellaneous methods
 
 	// count the number of samples in the file
-int count_number_of_samples(std::string dataset_file_name)
+int count_number_of_samples(std::filesystem::path dataset_file_path)
 {
-	std::fstream dataset_file(dataset_file_name);
+	std::fstream dataset_file(dataset_file_path);
 
 	int counter = 0;
 	std::string line;
@@ -137,9 +137,9 @@ int count_number_of_samples(std::string dataset_file_name)
 
 	// count number of column titles, which is equal to number of features
 	// note that the number of features is equal to the number of fields taken in minus 1, given the last column are target values
-int count_number_of_features(std::string dataset_file_name)
+int count_number_of_features(std::filesystem::path dataset_file_path)
 {
-	std::fstream dataset_file(dataset_file_name);
+	std::fstream dataset_file(dataset_file_path);
 
 	int counter = 0;
 	std::string line, value;

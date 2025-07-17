@@ -1,0 +1,17 @@
+
+	Training configs for epic:
+
+		Training option: k-folded samples
+		Initial learning rate - 0.1
+		Regularization rate - 0.1
+		Patience - 10
+		Number of epochs - 10
+		Number of folds - 5
+
+	Best MSEs for each fold:
+
+		Fold #1 - 6.00505
+		Fold #2 - 4.66451
+		Fold #3 - 5.44
+		Fold #4 - 5.58199
+		Fold #5 - 4.86906

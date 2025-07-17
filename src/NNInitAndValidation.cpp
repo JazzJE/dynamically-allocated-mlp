@@ -1,8 +1,9 @@
 #include "NeuralNetwork.h"
 
 // validating the neural network files
-void NeuralNetwork::validate_neural_network_files(std::string weights_and_biases_file_path, std::string means_and_vars_file_path,
-	std::string scales_and_shifts_file_path)
+void NeuralNetwork::validate_neural_network_files(std::filesystem::path weights_and_biases_file_path, std::filesystem::path means_and_vars_file_path,
+	std::filesystem::path scales_and_shifts_file_path, std::string weights_and_biases_file_name, std::string means_and_vars_file_name,
+	std::string scales_and_shifts_file_name)
 {
 	std::fstream weights_and_biases_file(weights_and_biases_file_path, std::ios::in);
 
@@ -19,7 +20,7 @@ void NeuralNetwork::validate_neural_network_files(std::string weights_and_biases
 
 	// ensure that the weights and biases file has the appropriate weights and biases for each layer, else prompt the user 
 	// to generate
-	validate_weights_and_biases_file(weights_and_biases_file, weights_and_biases_file_path);
+	validate_weights_and_biases_file(weights_and_biases_file, weights_and_biases_file_name);
 
 	weights_and_biases_file.close();
 
@@ -39,7 +40,8 @@ void NeuralNetwork::validate_neural_network_files(std::string weights_and_biases
 	}
 
 	// validate each line has only 2 fields and no strings
-	validate_mv_or_ss_file(means_and_vars_file, means_and_vars_file_path, &NeuralNetwork::generate_means_and_vars_file);
+	validate_mv_or_ss_file(means_and_vars_file, means_and_vars_file_path, means_and_vars_file_name, 
+		&NeuralNetwork::generate_means_and_vars_file);
 
 	means_and_vars_file.close();
 
@@ -59,7 +61,8 @@ void NeuralNetwork::validate_neural_network_files(std::string weights_and_biases
 	}
 
 	// validate each line has only 2 fields and no strings
-	validate_mv_or_ss_file(scales_and_shifts_file, scales_and_shifts_file_path, &NeuralNetwork::generate_scales_and_shifts_file);
+	validate_mv_or_ss_file(scales_and_shifts_file, scales_and_shifts_file_path, scales_and_shifts_file_name, 
+		&NeuralNetwork::generate_scales_and_shifts_file);
 
 	scales_and_shifts_file.close();
 }
@@ -67,7 +70,7 @@ void NeuralNetwork::validate_neural_network_files(std::string weights_and_biases
 // generating weights and biases file methods
 
 	// generate weight file if not already made
-void NeuralNetwork::generate_weights_and_biases_file(std::string weights_and_biases_file_path)
+void NeuralNetwork::generate_weights_and_biases_file(std::filesystem::path weights_and_biases_file_path)
 {
 	std::fstream weights_and_biases_file(weights_and_biases_file_path, std::ios::out | std::ios::trunc);
 
@@ -256,7 +259,7 @@ int NeuralNetwork::find_error_weights_and_biases_file(std::fstream& weights_and_
 
 	// generate a file that will store the running means and running variances of each neuron
 	// each mean will be initialized to 0, and each variance will be initialize to 1
-void NeuralNetwork::generate_means_and_vars_file(std::string means_and_vars_file_path)
+void NeuralNetwork::generate_means_and_vars_file(std::filesystem::path means_and_vars_file_path)
 {
 	std::fstream means_and_vars_file(means_and_vars_file_path, std::ios::out | std::ios::trunc);
 
@@ -268,7 +271,7 @@ void NeuralNetwork::generate_means_and_vars_file(std::string means_and_vars_file
 
 	// generate a file that will store the shifts and scales of each neuron
 	// each mean will be initialized to 0, and each variance will be initialize to 1
-void NeuralNetwork::generate_scales_and_shifts_file(std::string scales_and_shifts_file_path)
+void NeuralNetwork::generate_scales_and_shifts_file(std::filesystem::path scales_and_shifts_file_path)
 {
 	std::fstream scales_and_shifts_file(scales_and_shifts_file_path, std::ios::out | std::ios::trunc);
 
@@ -279,20 +282,20 @@ void NeuralNetwork::generate_scales_and_shifts_file(std::string scales_and_shift
 }
 
 // verify the means and var file, and return -1 if no error was detected
-void NeuralNetwork::validate_mv_or_ss_file(std::fstream& mv_or_ss_file, std::string mv_or_ss_file_path, 
-	void (NeuralNetwork::*generate_mv_or_ss_file)(std::string))
+void NeuralNetwork::validate_mv_or_ss_file(std::fstream& mv_or_ss_file, std::filesystem::path mv_or_ss_file_path, 
+	std::string mv_or_ss_file_name, void (NeuralNetwork::*generate_mv_or_ss_file)(std::filesystem::path))
 {
 	int line_error = find_error_mv_or_ss_file(mv_or_ss_file);
 	if (line_error != -1)
 	{
 		char option;
 
-		std::cout << "\n[ERROR] One of the following errors is within " << mv_or_ss_file_path
+		std::cout << "\n[ERROR] One of the following errors is within " << mv_or_ss_file_name
 			<< "\n\n\t1. String value was detected"
 			<< "\n\t2. There are greater than two fields within the below-provided line"
 			<< "\n\t3. There are too many or too few lines within the file"
 			<< "\n\n\t***The error was found on line " << line_error << " in " << mv_or_ss_file_path << " ***"
-			<< "\n\nWould you like to generate a new " << mv_or_ss_file_path << " file?: ";
+			<< "\n\nWould you like to generate a new " << mv_or_ss_file_name << " file?: ";
 		std::cin >> option;
 
 		while (option != 'Y' && option != 'N')
@@ -305,7 +308,7 @@ void NeuralNetwork::validate_mv_or_ss_file(std::fstream& mv_or_ss_file, std::str
 		{
 			mv_or_ss_file.close();
 
-			std::cout << "\nGenerating new " << mv_or_ss_file_path << "...\n\n";
+			std::cout << "\nGenerating new " << mv_or_ss_file_name << "...\n\n";
 			(this->*generate_mv_or_ss_file)(mv_or_ss_file_path);
 
 			mv_or_ss_file.open(mv_or_ss_file_path, std::ios::in);
@@ -372,7 +375,7 @@ int NeuralNetwork::find_error_mv_or_ss_file(std::fstream& mv_or_ss_file)
 // parsing methods
 
 	// parse the weights_and_biases file into an array
-void NeuralNetwork::parse_weights_and_biases_file(std::string weights_and_biases_file_path)
+void NeuralNetwork::parse_weights_and_biases_file(std::filesystem::path weights_and_biases_file_path)
 {
 	std::fstream weights_and_biases_file(weights_and_biases_file_path, std::ios::in);
 
@@ -418,7 +421,7 @@ void NeuralNetwork::parse_weights_and_biases_for_layer(std::fstream& weights_and
 }
 
 // parse the running means and variances OR shifts and scales file
-void NeuralNetwork::parse_mv_or_ss_file(std::string mv_or_ss_file_path, double* means_or_scales, double* variances_or_shifts)
+void NeuralNetwork::parse_mv_or_ss_file(std::filesystem::path mv_or_ss_file_path, double* means_or_scales, double* variances_or_shifts)
 {
 	std::fstream mv_or_ss_file(mv_or_ss_file_path, std::ios::in);
 

@@ -17,16 +17,19 @@
 		// and the number of neurons they will have
 
 NeuralNetwork::NeuralNetwork(const int* number_of_neurons_each_hidden_layer, int net_number_of_neurons_in_hidden_layers, int number_of_hidden_layers,
-	int number_of_features, std::string weights_and_biases_file_path, std::string means_and_vars_file_path, 
-	std::string scales_and_shifts_file_path) :
+	int number_of_features, std::filesystem::path weights_and_biases_file_path, std::filesystem::path means_and_vars_file_path,
+	std::filesystem::path scales_and_shifts_file_path, std::string weights_and_biases_file_name, std::string means_and_vars_file_name, 
+	std::string scales_and_shifts_file_name) :
 	
-	number_of_features(number_of_features), number_of_neurons_each_hidden_layer(number_of_neurons_each_hidden_layer),
+	number_of_features(number_of_features), 
+
+	number_of_neurons_each_hidden_layer(create_dynamically_allocated_number_of_neurons_each_hidden_layer_array
+	(number_of_neurons_each_hidden_layer, number_of_hidden_layers)),
+
 	number_of_hidden_layers(number_of_hidden_layers), learning_rate(new double), regularization_rate(new double),
 
-	// this will be used to save and reload states of the neural network
-	// saved state loader will save the best state of the nn when the mse is lower than the best mse
 	ss_loader(network_weights, network_biases, network_running_means, network_running_variances, network_scales, network_shifts,
-		this->get_number_of_neurons_each_hidden_layer(), number_of_hidden_layers, net_number_of_neurons_in_hidden_layers, 
+		number_of_neurons_each_hidden_layer, number_of_hidden_layers, net_number_of_neurons_in_hidden_layers, 
 		number_of_features),
 
 	// dynamic memory allocation of key components
@@ -48,7 +51,8 @@ NeuralNetwork::NeuralNetwork(const int* number_of_neurons_each_hidden_layer, int
 
 {
 	// ensure that all nn files match up with the array provided by the user, else prompt them to regenerate the nn components
-	validate_neural_network_files(weights_and_biases_file_path, means_and_vars_file_path, scales_and_shifts_file_path);
+	validate_neural_network_files(weights_and_biases_file_path, means_and_vars_file_path, scales_and_shifts_file_path, 
+		weights_and_biases_file_name, means_and_vars_file_name, scales_and_shifts_file_name);
 
 	parse_weights_and_biases_file(weights_and_biases_file_path);
 	parse_mv_or_ss_file(means_and_vars_file_path, network_running_means, network_running_variances);
@@ -112,30 +116,46 @@ NeuralNetwork::~NeuralNetwork()
 	delete[] network_shifts;
 }
 
+// helper function to create a dynamically allocated version of the number of neurons each hidden layer array for easy access for
+// the components of the neural network
+const int* NeuralNetwork::create_dynamically_allocated_number_of_neurons_each_hidden_layer_array(const int* number_of_neurons_each_hidden_layer, 
+	int number_of_hidden_layers)
+{
+	int* temp = new int[number_of_hidden_layers];
+
+	for (int l = 0; l < number_of_hidden_layers; l++)
+		temp[l] = number_of_neurons_each_hidden_layer[l];
+
+	return temp;
+}
+
 // update batch size
 void NeuralNetwork::update_arrays_using_batch_size()
 {
+	// deallocate all arrays using batch size and set them to nullptr to ensure that the deallocate_2d_array methods function properly
+	output_layer->deallocate_arrays_using_batch_size();
+	for (int l = number_of_hidden_layers - 1; l >= 0; l--)
+		hidden_layers[l]->deallocate_arrays_using_batch_size();
+
+	// allocate memory and connect all the layers to each other
 	// output layer will have batch size x 1 2d array of activations for output as there is only one output neuron
-	output_layer->update_arrays_using_batch_size(batch_size, allocate_memory_for_2D_array(batch_size, 1));
+	output_layer->allocate_arrays_using_batch_size(batch_size, allocate_memory_for_2D_array(batch_size, 1));
 
 	if (number_of_hidden_layers == 1)
-
-		hidden_layers[0]->update_arrays_using_batch_size(batch_size, output_layer->get_training_input_features());
-
+		hidden_layers[0]->allocate_arrays_using_batch_size(batch_size, output_layer->get_training_input_features());
 	else
 	{
-		hidden_layers[number_of_hidden_layers - 1]->update_arrays_using_batch_size(batch_size, output_layer->get_training_input_features());
-
+		hidden_layers[number_of_hidden_layers - 1]->allocate_arrays_using_batch_size(batch_size, output_layer->get_training_input_features());
 		for (int l = number_of_hidden_layers - 1; l > 1; l--)
-			hidden_layers[l - 1]->update_arrays_using_batch_size(batch_size, hidden_layers[l]->get_training_input_features());
+			hidden_layers[l - 1]->allocate_arrays_using_batch_size(batch_size, hidden_layers[l]->get_training_input_features());
 
 		// note that the current_index will always equal to 0 at this point
-		hidden_layers[0]->update_arrays_using_batch_size(batch_size, hidden_layers[1]->get_training_input_features());
+		hidden_layers[0]->allocate_arrays_using_batch_size(batch_size, hidden_layers[1]->get_training_input_features());
 	}
 }
 
 // train the neural network on five different folds of the training set
-void NeuralNetwork::k_fold_train(double** training_features, bool* not_normalize, double* log_transformed_target_values, 
+void NeuralNetwork::k_fold_train(TrainingLogList& log_list, double** training_features, bool* not_normalize, double* log_transformed_target_values, 
 	int number_of_samples, int number_of_folds)
 {	
 	// save the initial state of the neural network, which all folds will reset to when patience is reached
@@ -145,6 +165,9 @@ void NeuralNetwork::k_fold_train(double** training_features, bool* not_normalize
 	// of the cv fold
 	int lower_cross_validation_index, higher_cross_validation_index;
 	int samples_per_fold = number_of_samples / number_of_folds;
+
+	// get the best mse for each fold to add create a new transaction object
+	double* best_mse_for_each_fold = new double[number_of_folds];
 
 	for (int i = 0; i < number_of_folds - 1; i++)
 	{
@@ -161,8 +184,8 @@ void NeuralNetwork::k_fold_train(double** training_features, bool* not_normalize
 		double** training_features_normalized = calculate_normalized_features(training_features, not_normalize, number_of_samples,
 			number_of_features, training_means, training_variances);
 
-		early_stop_training(training_features_normalized, log_transformed_target_values, number_of_samples, lower_cross_validation_index,
-			higher_cross_validation_index);
+		best_mse_for_each_fold[i] = early_stop_training(training_features_normalized, log_transformed_target_values, number_of_samples, 
+			lower_cross_validation_index, higher_cross_validation_index);
 
 		// reset the nn to the original state for future folds
 		std::cout << "\n\n\t\tResetting the neural network to its initial state...";
@@ -187,31 +210,73 @@ void NeuralNetwork::k_fold_train(double** training_features, bool* not_normalize
 	double** training_features_normalized = calculate_normalized_features(training_features, not_normalize, number_of_samples, number_of_features,
 		training_means, training_variances);
 
-	early_stop_training(training_features_normalized, log_transformed_target_values, number_of_samples, lower_cross_validation_index,
-		higher_cross_validation_index);
+	best_mse_for_each_fold[number_of_folds - 1] = early_stop_training(training_features_normalized, log_transformed_target_values, 
+		number_of_samples, lower_cross_validation_index, higher_cross_validation_index);
 
 	// reset nn to initial state
 	std::cout << "\n\n\t\tResetting the neural network to its initial state...";
+	std::cout << "\n";
 	ss_loader.load_saved_state();
 
 	delete[] training_means;
 	delete[] training_variances;
 	deallocate_memory_for_2D_array(training_features_normalized, number_of_samples);
+
+	generate_border_line();
+
+	std::string new_session_name;
+	input_session_name(new_session_name);
+
+	generate_border_line();
+
+	// print a final log and add it to the list of training logs
+	bool using_all_samples = false;
+	TrainingLog* new_training_log = new TrainingLog(new_session_name, using_all_samples, *learning_rate, *regularization_rate, patience,
+		number_of_epochs, best_mse_for_each_fold, number_of_folds);
+	new_training_log->print_training_log();
+	log_list.add_training_log(new_training_log);
+
+	delete[] best_mse_for_each_fold;
 }
 
 // method use to train the network explicitly for all samples and eventually generate a final model
-void NeuralNetwork::all_sample_train(double** all_normalized_training_features, double* log_transformed_target_values, int number_of_samples)
+void NeuralNetwork::all_sample_train(TrainingLogList& log_list, double** all_normalized_training_features, double* log_transformed_target_values, int number_of_samples)
 {
+	// these will be used by the training log to display corresponding information of this session
+	int number_of_folds = 1;
+	double* best_mse_for_all_samples = new double;
+
 	// train the neural network with early stop training on the entire data set as the cross-validation set
 	int first_sample_index = 0;
 	int last_sample_index = number_of_samples - 1;
-	early_stop_training(all_normalized_training_features, log_transformed_target_values, number_of_samples, first_sample_index, 
+	*best_mse_for_all_samples = early_stop_training(all_normalized_training_features, log_transformed_target_values, number_of_samples, first_sample_index, 
 		last_sample_index);
+	std::cout << "\n";
+
+	generate_border_line();
+
+	std::string new_session_name;
+	input_session_name(new_session_name);
+
+	generate_border_line();
+
+	// print the training log
+	bool using_all_samples = true;
+	TrainingLog* new_training_log = new TrainingLog(new_session_name, using_all_samples, *learning_rate, *regularization_rate, patience, 
+		number_of_epochs, best_mse_for_all_samples, number_of_folds);
+	new_training_log->print_training_log();
+	log_list.add_training_log(new_training_log);
+	std::cout << "\n";
+	
+	delete best_mse_for_all_samples;
+
+	generate_border_line();
 
 	// ask user if they would like to keep the state of the neural network locally within the program
 	char option;
-	std::cout << "\n\n\tWould you like to use this neural network for the rest of the program duration?"
-		<< "\n\t\t- Note that this will NOT save the network; select the option within the menu if desired (Y / N): ";
+	std::cout << "\n\tWould you like to use this neural network for the rest of the current program duration?"
+		<< "\n\t\t- Note that this will NOT save the network; select menu option " 
+		<< static_cast<char>(MenuOptions::SAVE_NETWORK_STATE_OPTION) << " after entering \'Y\' if desired (Y / N) : ";
 	std::cin >> option;
 
 	while (option != 'Y' && option != 'N' || std::cin.peek() != '\n')
@@ -365,6 +430,8 @@ void NeuralNetwork::backpropagate_derived_values(double* log_transformed_target_
 			hidden_layers[l]->get_layer_weights(), number_of_neurons_each_hidden_layer[l]);
 }
 
+// print final status report of the best mse of each fold, as well as the current learning rates
+
 // update all the parameters of the entire nn from beginning to end, primarily running means and variances, 
 // scales and shifts, weights, and biases
 void NeuralNetwork::update_parameters()
@@ -422,18 +489,6 @@ double NeuralNetwork::calculate_prediction(double* normalized_input_features) co
 	output_layer->compute_activation_array();
 
 	return *(output_layer->get_activation_array());
-}
-
-// get a dynamically allocated array that will store the number of neurons each hidden layer so best state loader 
-// will know how to save the current parameters
-int* NeuralNetwork::get_number_of_neurons_each_hidden_layer() const
-{
-	int* nnehl = new int[number_of_hidden_layers];
-
-	for (int i = 0; i < number_of_hidden_layers; i++)
-		nnehl[i] = number_of_neurons_each_hidden_layer[i];
-
-	return nnehl;
 }
 
 // accessor methods for updating the neural network files

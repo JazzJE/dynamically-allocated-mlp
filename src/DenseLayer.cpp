@@ -41,16 +41,19 @@ DenseLayer::~DenseLayer()
 	delete[] training_variances;
 }
 
-// updating the batch size of a layer requires a lot of alterations to dynamically allocated memory
-void DenseLayer::update_arrays_using_batch_size(int new_batch_size, double** new_training_activation_arrays)
+// delete all dynamically allocated memory and then set them to all nullptr
+void DenseLayer::deallocate_arrays_using_batch_size()
 {
-	// delete all dynamically allocated memory that relied on batch size
 	deallocate_memory_for_2D_array(training_input_features, batch_size);
 	deallocate_memory_for_2D_array(linear_transform_derived_values, number_of_neurons);
 	deallocate_memory_for_2D_array(affine_transform_derived_values, number_of_neurons);
 	deallocate_memory_for_2D_array(linear_transform_values, number_of_neurons);
 	deallocate_memory_for_2D_array(normalized_values, number_of_neurons);
+}
 
+// updating the batch size of a layer requires a lot of alterations to dynamically allocated memory
+void DenseLayer::allocate_arrays_using_batch_size(int new_batch_size, double** new_training_activation_arrays)
+{
 	// recreate the arrays that relied on batch size but w/ the new batch size
 	training_input_features = allocate_memory_for_2D_array(new_batch_size, number_of_features);
 	linear_transform_derived_values = allocate_memory_for_2D_array(number_of_neurons, new_batch_size);

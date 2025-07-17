@@ -30,10 +30,6 @@ NeuralNetwork::SavedStateLoader::~SavedStateLoader()
 	delete[] saved_running_variances;
 	delete[] saved_scales;
 	delete[] saved_shifts;
-
-	// the number of neurons each hidden layer for the bs loader is actually a dynamically allocated array because of access issues
-	// in trying to access the nn's number_of_neurons_each_hidden_layer
-	delete[] number_of_neurons_each_hidden_layer;
 }
 
 // update the best state to the current state of the neural network

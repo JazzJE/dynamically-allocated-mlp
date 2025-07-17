@@ -93,12 +93,34 @@ void deallocate_memory_for_biases(double** biases, int number_of_hidden_layers)
 
 		delete[] biases;
 	}
-
-	biases = nullptr;
 }
 
-// deallocate memory for training features
-void deallocate_memory_for_2D_array(double** twoD_array, int number_of_rows)
+// deallocate memory for a const pointer 2d array
+void deallocate_memory_for_2D_array(double** const twoD_array, int number_of_rows)
+{
+	if (twoD_array != nullptr)
+	{
+		for (int t = 0; t < number_of_rows; t++)
+			delete[] twoD_array[t];
+
+		delete[] twoD_array;
+	}
+}
+
+// deallocate memory for a nonconst pointer 2d array
+void deallocate_memory_for_2D_array(double** const & twoD_array, int number_of_rows)
+{
+	if (twoD_array != nullptr)
+	{
+		for (int t = 0; t < number_of_rows; t++)
+			delete[] twoD_array[t];
+
+		delete[] twoD_array;
+	}
+}
+
+// deallocate memory for a nonconst pointer 2d array
+void deallocate_memory_for_2D_array(double**& twoD_array, int number_of_rows)
 {
 	if (twoD_array != nullptr)
 	{

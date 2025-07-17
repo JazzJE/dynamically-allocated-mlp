@@ -63,8 +63,9 @@ public:
 
 	~DenseLayer();
 
-	// updating the batch size of a layer requires a lot of alterations to dynamically allocated memory
-	void update_arrays_using_batch_size(int new_batch_size, double** new_training_activation_arrays);
+	// both methods used for connecting all of the layers to each other
+	void deallocate_arrays_using_batch_size();
+	void allocate_arrays_using_batch_size(int new_batch_size, double** new_training_activation_arrays);
 
 	// layer will go through each neuron and compute its activation values
 	void compute_activation_array();

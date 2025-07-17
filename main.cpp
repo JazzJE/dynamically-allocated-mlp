@@ -46,12 +46,11 @@
 #include <limits>
 #include "InitializationFunctions.h"
 #include "MemoryFunctions.h"
+#include "TrainingLogAndList.h"
 #include "MenuFunctions.h"
 #include "DenseLayer.h"
 #include "NeuralNetwork.h"
 #include "StatisticsFunctions.h"
-
-namespace fs = std::filesystem;
 
 int main()
 {
@@ -79,10 +78,25 @@ int main()
 
 	// PAST THIS POINT IS ALL THE HARD CODE; REFER TO THE ABOVE number_of_neurons_each_hidden_layer ARRAY TO CHANGE THE STRUCTURE OF THE MLP
 
+	// all the names of the corresponding files we will parse into this program
+	const std::string nn_saved_state_directory_name = "nn_saved_state";
+	const std::string training_logs_directory_name = "training_logs";
+	const std::string dataset_file_name = "dataset.csv";
+	const std::string weights_and_biases_file_name = "weights_and_biases.csv";
+	const std::string means_and_vars_file_name = "means_and_vars.csv";
+	const std::string scales_and_shifts_file_name = "scales_and_shifts.csv";
+
+	// all the system file paths from root directory
+	const std::filesystem::path project_root = PROJECT_ROOT;
+	const std::filesystem::path nn_saved_state_file_path = project_root / nn_saved_state_directory_name;
+	const std::filesystem::path training_logs_file_path = project_root / training_logs_directory_name;
+	const std::filesystem::path dataset_file_path = project_root / dataset_file_name;
+	const std::filesystem::path weights_and_biases_file_path = nn_saved_state_file_path / weights_and_biases_file_name;
+	const std::filesystem::path means_and_vars_file_path = nn_saved_state_file_path / means_and_vars_file_name;
+	const std::filesystem::path scales_and_shifts_file_path = nn_saved_state_file_path / scales_and_shifts_file_name;
+
 	clear_screen();
 	std::cout << "The program may take a couple of seconds to load...\n" << std::fixed;
-
-	std::string dataset_file_name = "dataset.csv";
 
 	// check if there is a negative number or zero in the number of neurons each hidden layer array
 	int number_of_hidden_layers = sizeof(number_of_neurons_each_hidden_layer) / sizeof(int);
@@ -110,7 +124,7 @@ int main()
 	for (int l = 0; l < number_of_hidden_layers; l++)
 		net_number_of_neurons_in_hidden_layers += number_of_neurons_each_hidden_layer[l];
 
-	std::fstream dataset_file(dataset_file_name, std::ios::in);
+	std::fstream dataset_file(dataset_file_path, std::ios::in);
 	if (!dataset_file) 
 	{
 		std::cerr << "[ERROR] The dataset could not be found within the project; please edit the \"dataset_file_name\" variable "
@@ -119,24 +133,24 @@ int main()
 	}
 
 	// make the program a little more autonomous so user doesn't need to be confused entering these values
-	int number_of_samples = count_number_of_samples(dataset_file_name);
-	int number_of_features = count_number_of_features(dataset_file_name);
+	const int number_of_samples = count_number_of_samples(dataset_file_path);
+	const int number_of_features = count_number_of_features(dataset_file_path);
 
 	// given the number of features, ensure that each row has the same number of columns
 	validate_dataset_file(dataset_file, dataset_file_name, number_of_features);
 
-	double** const training_features = allocate_memory_for_2D_array(number_of_samples, number_of_features);
-	double* const target_values = new double[number_of_samples];
-	std::string* const feature_names = new std::string[number_of_features]; // get the names of the columns during parsing
+	double** training_features = allocate_memory_for_2D_array(number_of_samples, number_of_features);
+	double* target_values = new double[number_of_samples];
+	std::string* feature_names = new std::string[number_of_features]; // get the names of the columns during parsing
 	std::string target_name;
 	parse_dataset_file(dataset_file, training_features, target_values, feature_names, target_name, number_of_features, number_of_samples);
 
 	// calculate the log transformed values of the target values
-	double* const log_transformed_target_values = calculate_log_transformed_target_values(target_values, number_of_samples);
+	double* log_transformed_target_values = calculate_log_transformed_target_values(target_values, number_of_samples);
 
 	// from the feature names, identify which features should not be normalized if their column names start with a ~ sign
 	// the calculating means, variances, and features helper methods will ignore these features during their calculations
-	bool* const not_normalize = identify_not_normalize_feature_columns(feature_names, number_of_features);
+	bool* not_normalize = identify_not_normalize_feature_columns(feature_names, number_of_features);
 
 	// store the sample numbers so that they can correspond to the correct sample within the dataset when shuffled
 	int* sample_numbers = new int[number_of_samples];
@@ -144,9 +158,7 @@ int main()
 		sample_numbers[i] = i + 1;
 
 	// randomize locally
-	int number_of_shuffles = 20;
-	for (int s = 0; s < number_of_shuffles; s++)
-		randomize_training_samples(training_features, target_values, log_transformed_target_values, sample_numbers, number_of_samples);
+	randomize_training_samples(training_features, target_values, log_transformed_target_values, sample_numbers, number_of_samples);
 
 	// calculate normalized features of all the samples; will be used for testing predictions
 	double* all_features_means = calculate_features_means(training_features, not_normalize, number_of_features, number_of_samples);
@@ -158,18 +170,18 @@ int main()
 	dataset_file.close();
 
 	// create a directory to store the neural network files if not already made
-	fs::path nn_state_file_path = "nn_saved_state/";
-	if (fs::create_directory(nn_state_file_path))
+	if (std::filesystem::create_directory(nn_saved_state_file_path))
 		std::cout << "\nCreating directory to store the state of your neural network...\n";
 
-	// validate all the neural network files, and also check if they exist, otherwise generate new ones
-	std::string weights_and_biases_file_path = nn_state_file_path.generic_string() + "weights_and_biases.csv";
-	std::string means_and_vars_file_path = nn_state_file_path.generic_string() + "means_and_vars.csv";
-	std::string scales_and_shifts_file_path = nn_state_file_path.generic_string() + "scales_and_shifts.csv";
+	// create a directory to store the training logs if not already made
+	if (std::filesystem::create_directory(training_logs_file_path))
+		std::cout << "\nCreating directory to store the training logs...\n";
 
 	char option;
-	NeuralNetwork* const neural_network = new NeuralNetwork(number_of_neurons_each_hidden_layer, net_number_of_neurons_in_hidden_layers,
-		number_of_hidden_layers, number_of_features, weights_and_biases_file_path, means_and_vars_file_path, scales_and_shifts_file_path);
+	NeuralNetwork neural_network(number_of_neurons_each_hidden_layer, net_number_of_neurons_in_hidden_layers, number_of_hidden_layers, 
+		number_of_features, weights_and_biases_file_path, means_and_vars_file_path, scales_and_shifts_file_path, 
+		weights_and_biases_file_name, means_and_vars_file_name, scales_and_shifts_file_name);
+	TrainingLogList log_list(training_logs_file_path);
 
 	std::cout << "\nHello! Welcome to my hard-coded neural network program.\n";
 
@@ -189,12 +201,13 @@ int main()
 
 		case MenuOptions::ALL_SAMPLE_TRAIN_OPTION:
 
-			all_sample_train_network_option(neural_network, all_features_normalized, log_transformed_target_values, number_of_samples);
+			all_sample_train_network_option(neural_network, log_list, all_features_normalized, log_transformed_target_values, number_of_samples);
 			break;
 
 		case MenuOptions::FIVE_FOLD_TRAIN_OPTION:
 
-			five_fold_train_network_option(neural_network, training_features, not_normalize, log_transformed_target_values, number_of_samples);
+			k_fold_train_network_option(neural_network, log_list, training_features, not_normalize, log_transformed_target_values, 
+				number_of_samples);
 			break;
 
 		case MenuOptions::SAVE_NETWORK_STATE_OPTION: // save current neural network
@@ -205,11 +218,7 @@ int main()
 
 		case MenuOptions::RANDOMIZE_SAMPLES_OPTION: // change learning and regularization parameters
 
-			std::cout << "\n\tRandomizing samples' order...";
-			for (int s = 0; s < number_of_shuffles; s++)
-				randomize_training_samples(training_features, target_values, log_transformed_target_values, sample_numbers, number_of_samples);
-			std::cout << "\n\n\tDone!\n";
-
+			randomize_training_samples(training_features, target_values, log_transformed_target_values, sample_numbers, number_of_samples);
 			break;
 
 		case MenuOptions::PREDICT_PROVIDED_FEATURES_OPTION: // change the batch size of the nn and regen it due to const qualifiers
@@ -222,6 +231,16 @@ int main()
 
 			predict_with_random_features_option(neural_network, feature_names, target_name, training_features, all_features_normalized, 
 				target_values, log_transformed_target_values, sample_numbers, number_of_samples, number_of_features);
+			break;
+
+		case MenuOptions::PRINT_TRAINING_LOGS_OPTION:
+
+			log_list.print_all_training_logs();
+			break;
+
+		case MenuOptions::SAVE_TRAINING_LOGS_OPTION:
+
+			log_list.save_training_logs();
 
 		}
 
@@ -229,7 +248,6 @@ int main()
 		std::cout << "\n";
 	}
 
-	delete neural_network;
 	deallocate_memory_for_2D_array(training_features, number_of_samples);
 	delete[] target_values;
 	delete[] log_transformed_target_values;

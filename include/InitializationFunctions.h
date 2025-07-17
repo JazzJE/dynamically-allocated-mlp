@@ -1,5 +1,6 @@
 #pragma once
 #include <iostream>
+#include <filesystem>
 #include <fstream>
 #include <sstream>
 #include <random>
@@ -13,8 +14,8 @@ void validate_dataset_file(std::fstream& dataset_file, std::string dataset_file_
 int find_error_dataset_file(std::fstream& dataset_file, int number_of_features);
 
 // miscallaneous methods
-int count_number_of_samples(std::string dataset_file_name);
-int count_number_of_features(std::string dataset_file_name);
+int count_number_of_samples(std::filesystem::path dataset_file_path);
+int count_number_of_features(std::filesystem::path dataset_file_path);
 bool* identify_not_normalize_feature_columns(std::string* feature_names, int number_of_features);
 double* calculate_log_transformed_target_values(double* target_values, int number_of_samples);
 void clear_screen();

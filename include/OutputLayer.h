@@ -13,6 +13,9 @@ public:
 	// delete the output neuron array
 	~OutputLayer();
 
+	// must delete the output arrays
+	void deallocate_arrays_using_batch_size();
+
 	// no for loops; just a single value
 	void compute_activation_array();
 	void training_compute_activation_arrays();

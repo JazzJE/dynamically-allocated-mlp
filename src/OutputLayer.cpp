@@ -16,6 +16,17 @@ OutputLayer::~OutputLayer()
 	delete[] activation_array;
 }
 
+// output layer must get rid of its output arrays
+void OutputLayer::deallocate_arrays_using_batch_size()
+{
+	deallocate_memory_for_2D_array(training_activation_arrays, batch_size);
+	deallocate_memory_for_2D_array(training_input_features, batch_size);
+	deallocate_memory_for_2D_array(linear_transform_derived_values, number_of_neurons);
+	deallocate_memory_for_2D_array(affine_transform_derived_values, number_of_neurons);
+	deallocate_memory_for_2D_array(linear_transform_values, number_of_neurons);
+	deallocate_memory_for_2D_array(normalized_values, number_of_neurons);
+}
+
 // only do linear transformation to compute the activation value
 void OutputLayer::compute_activation_array()
 { linear_transform(); }

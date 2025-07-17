@@ -20,6 +20,7 @@ set(SOURCES
     src/StatisticsFunctions.cpp
     src/SavedStateLoader.cpp
     src/NNInitAndValidation.cpp
+    src/TrainingLogAndList.cpp
 )
 
 # Header files (for IDE organization)
@@ -32,7 +33,11 @@ set(HEADERS
     include/MenuFunctions.h
     include/StatisticsFunctions.h
     include/Constants.h
+    include/TrainingLogAndList.h
 )
+
+# For relative access to the nn saved state and dataset files
+add_compile_definitions(PROJECT_ROOT="${CMAKE_CURRENT_SOURCE_DIR}")
 
 # Create executable
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})

@@ -11,7 +11,6 @@ Simple multi-layer perceptron made from scratch that does not use C++'s vector l
 - [Performance](#performance)
 - [Troubleshooting](#troubleshooting)
 - [Contributing](#contributing)
-- [License](#license)
 
 ## Original Dataset
 This project uses a transformed version of the [California Housing Prices](https://www.kaggle.com/datasets/camnugent/california-housing-prices) dataset from Kaggle:

@@ -101,7 +101,7 @@ Other runtime features of the program:
 
 ### Running the Program
 
-Execute from build directory:
+Execute from `build` directory:
 ```bash
 ./neural_network.exe
 ```

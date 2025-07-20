@@ -161,8 +161,8 @@ void DenseLayer::training_normalize_linear_transform_value()
 void DenseLayer::training_relu_activation_function()
 {
 	#pragma omp parallel for collapse(2)
-	for (int n = 0; n < number_of_neurons; n++)
-		for (int s = 0; s < batch_size; s++)
+	for (int s = 0; s < batch_size; s++)
+		for (int n = 0; n < number_of_neurons; n++)
 			training_activation_arrays[s][n] = (training_activation_arrays[s][n] > 0) ? training_activation_arrays[s][n] : 0;
 }
 

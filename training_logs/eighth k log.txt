@@ -1,0 +1,18 @@
+
+	Training configs for eighth k log:
+
+		Training option: k-folded samples
+		Initial learning rate - 0.285
+		Regularization rate - 0.1
+		Patience - 50
+		Number of epochs - 1000
+		Number of folds - 5
+		Batch size - 512
+
+	Best MSEs for each fold:
+
+		Fold #1 - 0.251788
+		Fold #2 - 0.0622656
+		Fold #3 - 1004.01
+		Fold #4 - 795.982
+		Fold #5 - 0.0489721

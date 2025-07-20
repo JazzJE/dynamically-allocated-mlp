@@ -1,0 +1,14 @@
+
+	Training configs for all samples 1:
+
+		Training option: all samples
+		Initial learning rate - 0.25
+		Regularization rate - 0.1
+		Patience - 50
+		Number of epochs - 3000
+		Number of folds - 1
+		Batch size - 512
+
+	Best MSEs for each fold:
+
+		Fold #1 - 0.0428911

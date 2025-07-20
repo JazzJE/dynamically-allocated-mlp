@@ -1,0 +1,18 @@
+
+	Training configs for first k log:
+
+		Training option: k-folded samples
+		Initial learning rate - 0.1
+		Regularization rate - 0.1
+		Patience - 50
+		Number of epochs - 1000
+		Number of folds - 5
+		Batch size - 512
+
+	Best MSEs for each fold:
+
+		Fold #1 - 0.0898198
+		Fold #2 - 0.0790015
+		Fold #3 - 0.0941283
+		Fold #4 - 0.0827882
+		Fold #5 - 0.073924

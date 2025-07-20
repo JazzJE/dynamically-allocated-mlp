@@ -3,10 +3,10 @@
 #include "MenuFunctions.h"
 
 TrainingLog::TrainingLog(std::string session_name, bool using_all_samples, double learning_rate, double regularization_rate, 
-	int patience, int number_of_epochs, double* best_mse_for_each_fold, int number_of_folds) :
+	int patience, int number_of_epochs, double* best_mse_for_each_fold, int number_of_folds, int batch_size) :
 	using_all_samples(using_all_samples), learning_rate(learning_rate), regularization_rate(regularization_rate), patience(patience), 
 	number_of_epochs(number_of_epochs), best_mse_for_each_fold(new double[number_of_folds]), number_of_folds(number_of_folds), 
-	next_log(nullptr), session_name(session_name)
+	next_log(nullptr), session_name(session_name), batch_size(batch_size)
 { 
 	for (int f = 0; f < number_of_folds; f++)
 		this->best_mse_for_each_fold[f] = best_mse_for_each_fold[f];
@@ -25,7 +25,8 @@ void TrainingLog::print_training_log()
 		<< "\n\t\tRegularization rate - " << regularization_rate
 		<< "\n\t\tPatience - " << patience
 		<< "\n\t\tNumber of epochs - " << number_of_epochs
-		<< "\n\t\tNumber of folds - " << number_of_folds;
+		<< "\n\t\tNumber of folds - " << number_of_folds
+		<< "\n\t\tBatch size - " << batch_size;
 	std::cout << "\n";
 
 	std::cout << "\n\tBest MSEs for each fold:";
@@ -82,7 +83,7 @@ void TrainingLogList::print_all_training_logs()
 		while (curr != nullptr)
 		{
 			generate_border_line();
-			std::cout << "\n\tLog for training iteration #" << current_log_number << ":";
+			std::cout << "\n\tLog for training iteration #" << current_log_number << " (" << curr->session_name << "):";
 			std::cout << "\n";
 			curr->print_training_log();
 			std::cout << "\n";
@@ -102,7 +103,7 @@ void TrainingLogList::save_training_logs()
 
 	else
 	{
-		std::cout << "\n\tSaving training logs!\n";
+		std::cout << "\n\tSaved training logs!\n";
 
 		TrainingLog* curr = head;
 		while (curr != nullptr)
@@ -117,7 +118,8 @@ void TrainingLogList::save_training_logs()
 				<< "\n\t\tRegularization rate - " << curr->regularization_rate
 				<< "\n\t\tPatience - " << curr->patience
 				<< "\n\t\tNumber of epochs - " << curr->number_of_epochs
-				<< "\n\t\tNumber of folds - " << curr->number_of_folds;
+				<< "\n\t\tNumber of folds - " << curr->number_of_folds
+				<< "\n\t\tBatch size - " << curr->batch_size;
 			session_file << "\n";
 
 			session_file << "\n\tBest MSEs for each fold:";

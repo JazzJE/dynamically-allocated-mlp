@@ -34,7 +34,7 @@ MenuOptions get_option()
 }
 
 void generate_border_line()
-{ std::cout << '\n' << std::setw(50) << std::right << "----------------------\n"; }
+{ std::cout << '\n' << std::setw(Constants::width) << std::right << "----------------------\n"; }
 
 
 void save_neural_network_state(NeuralNetwork& neural_network, std::filesystem::path weights_and_biases_file_path, 
@@ -373,19 +373,22 @@ void input_number_of_folds(int& number_of_folds)
 
 void input_session_name(std::string& new_session_name)
 {
+	// ignore stuff if there's something in the buffer
+	std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
 	std::unordered_set<char> invalid_file_characters = { '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '+', '=', '[', ']', '{', '}', 
 		';', '\'', '\"', ',', '<', '>', '?', '|', '~' };
 
 	char invalid_char;
 	std::cout << "\n\tPlease enter a name for this session (do not use invalid file name characters): ";
-	std::cin >> new_session_name;
+	getline(std::cin, new_session_name);
 
 	// validation to check if the inputted file name is valid
 	for (int i = 0; i < new_session_name.length(); i++)
 		if (invalid_file_characters.find(new_session_name[i]) != invalid_file_characters.end())
 		{
 			std::cout << "\t[ERROR] Please enter a valid name for this session (no invalid file name characters): ";
-			std::cin >> new_session_name;
+			getline(std::cin, new_session_name);
 			i = -1;
 		}
 }
@@ -448,14 +451,12 @@ void update_weights_and_biases_file(std::filesystem::path weights_and_biases_fil
 
 	// rest of the layers
 	for (int l = 1; l < number_of_hidden_layers; l++)
-	{
 		for (int n = 0; n < number_of_neurons_each_hidden_layer[l]; n++)
 		{
 			for (int w = 0; w < number_of_neurons_each_hidden_layer[l - 1]; w++)
 				weights_and_biases_file << weights[l][n][w] << ", ";
 			weights_and_biases_file << biases[l][n] << "\n";
 		}
-	}
 	
 	// output layer
 	for (int w = 0; w < number_of_neurons_each_hidden_layer[number_of_hidden_layers - 1]; w++)

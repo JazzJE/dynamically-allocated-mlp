@@ -20,8 +20,6 @@ private:
 
 	// parameters and other variables
 	const int net_number_of_neurons_in_hidden_layers;
-	const double decay_rate = 0.95;
-	const double explosion_max = 1e30;
 	const int number_of_features;
 	int batch_size;
 	int patience;

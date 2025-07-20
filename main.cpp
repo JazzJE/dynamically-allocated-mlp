@@ -124,6 +124,7 @@ int main()
 	for (int l = 0; l < number_of_hidden_layers; l++)
 		net_number_of_neurons_in_hidden_layers += number_of_neurons_each_hidden_layer[l];
 
+	std::cout << "\n\tParsing data set file...\n";
 	std::fstream dataset_file(dataset_file_path, std::ios::in);
 	if (!dataset_file) 
 	{
@@ -150,7 +151,7 @@ int main()
 
 	// from the feature names, identify which features should not be normalized if their column names start with a ~ sign
 	// the calculating means, variances, and features helper methods will ignore these features during their calculations
-	bool* not_normalize = identify_not_normalize_feature_columns(feature_names, number_of_features);
+	bool* ignore_normalization = identify_not_normalize_feature_columns(feature_names, number_of_features);
 
 	// store the sample numbers so that they can correspond to the correct sample within the dataset when shuffled
 	int* sample_numbers = new int[number_of_samples];
@@ -161,21 +162,21 @@ int main()
 	randomize_training_samples(training_features, target_values, log_transformed_target_values, sample_numbers, number_of_samples);
 
 	// calculate normalized features of all the samples; will be used for testing predictions
-	double* all_features_means = calculate_features_means(training_features, not_normalize, number_of_features, number_of_samples);
-	double* all_features_variances = calculate_features_variances(training_features, not_normalize, all_features_means, number_of_features, 
+	double* all_features_means = calculate_features_means(training_features, ignore_normalization, number_of_features, number_of_samples);
+	double* all_features_variances = calculate_features_variances(training_features, ignore_normalization, all_features_means, number_of_features, 
 		number_of_samples);
-	double** all_features_normalized = calculate_normalized_features(training_features, not_normalize, number_of_samples,
+	double** all_features_normalized = calculate_normalized_features(training_features, ignore_normalization, number_of_samples,
 		number_of_features, all_features_means, all_features_variances);
 
 	dataset_file.close();
 
 	// create a directory to store the neural network files if not already made
 	if (std::filesystem::create_directory(nn_saved_state_file_path))
-		std::cout << "\nCreating directory to store the state of your neural network...\n";
+		std::cout << "\n\tCreating directory to store the state of your neural network...\n";
 
 	// create a directory to store the training logs if not already made
 	if (std::filesystem::create_directory(training_logs_file_path))
-		std::cout << "\nCreating directory to store the training logs...\n";
+		std::cout << "\n\tCreating directory to store the training logs...\n";
 
 	char option;
 	NeuralNetwork neural_network(number_of_neurons_each_hidden_layer, net_number_of_neurons_in_hidden_layers, number_of_hidden_layers, 
@@ -206,7 +207,7 @@ int main()
 
 		case MenuOptions::FIVE_FOLD_TRAIN_OPTION:
 
-			k_fold_train_network_option(neural_network, log_list, training_features, not_normalize, log_transformed_target_values, 
+			k_fold_train_network_option(neural_network, log_list, training_features, ignore_normalization, log_transformed_target_values, 
 				number_of_samples);
 			break;
 
@@ -224,7 +225,7 @@ int main()
 		case MenuOptions::PREDICT_PROVIDED_FEATURES_OPTION: // change the batch size of the nn and regen it due to const qualifiers
 			
 			predict_with_provided_features_option(neural_network, feature_names, target_name, all_features_means, all_features_variances,
-				not_normalize, number_of_features);
+				ignore_normalization, number_of_features);
 			break;
 
 		case MenuOptions::PREDICT_RANDOM_FEATURES_OPTION:
@@ -252,7 +253,7 @@ int main()
 	delete[] target_values;
 	delete[] log_transformed_target_values;
 	delete[] feature_names;
-	delete[] not_normalize;
+	delete[] ignore_normalization;
 
 	std::cout << "\nEnding program...\n";
 	return 0;

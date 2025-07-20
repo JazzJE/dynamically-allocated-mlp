@@ -10,6 +10,7 @@ struct TrainingLog
 	double regularization_rate;
 	int patience;
 	int number_of_epochs;
+	int batch_size;
 
 	int number_of_folds;
 	double* const best_mse_for_each_fold;
@@ -17,7 +18,7 @@ struct TrainingLog
 	TrainingLog* next_log;
 
 	TrainingLog(std::string session_name, bool using_all_samples, double learning_rate, double regularization_rate, int patience, int number_of_epochs, 
-		double* best_mse_for_each_fold, int number_of_folds);
+		double* best_mse_for_each_fold, int number_of_folds, int batch_size);
 	~TrainingLog();
 
 	void print_training_log();

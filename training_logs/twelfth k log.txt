@@ -1,0 +1,18 @@
+
+	Training configs for twelfth k log:
+
+		Training option: k-folded samples
+		Initial learning rate - 0.255
+		Regularization rate - 0.1
+		Patience - 50
+		Number of epochs - 1000
+		Number of folds - 5
+		Batch size - 512
+
+	Best MSEs for each fold:
+
+		Fold #1 - 0.0568772
+		Fold #2 - 0.0501932
+		Fold #3 - 0.0532076
+		Fold #4 - 0.125874
+		Fold #5 - 0.0573187

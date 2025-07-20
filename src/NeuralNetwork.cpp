@@ -4,6 +4,7 @@
 #include "MemoryFunctions.h"
 #include "MenuFunctions.h"
 #include "StatisticsFunctions.h"
+#include "Constants.h"
 
 // initialize each hidden layer with their...
 		// weights,
@@ -232,7 +233,7 @@ void NeuralNetwork::k_fold_train(TrainingLogList& log_list, double** training_fe
 	// print a final log and add it to the list of training logs
 	bool using_all_samples = false;
 	TrainingLog* new_training_log = new TrainingLog(new_session_name, using_all_samples, *learning_rate, *regularization_rate, patience,
-		number_of_epochs, best_mse_for_each_fold, number_of_folds);
+		number_of_epochs, best_mse_for_each_fold, number_of_folds, batch_size);
 	new_training_log->print_training_log();
 	log_list.add_training_log(new_training_log);
 
@@ -242,6 +243,9 @@ void NeuralNetwork::k_fold_train(TrainingLogList& log_list, double** training_fe
 // method use to train the network explicitly for all samples and eventually generate a final model
 void NeuralNetwork::all_sample_train(TrainingLogList& log_list, double** all_normalized_training_features, double* log_transformed_target_values, int number_of_samples)
 {
+	// save the initial, current state of the neural network
+	ss_loader.save_current_state();
+
 	// these will be used by the training log to display corresponding information of this session
 	int number_of_folds = 1;
 	double* best_mse_for_all_samples = new double;
@@ -263,7 +267,7 @@ void NeuralNetwork::all_sample_train(TrainingLogList& log_list, double** all_nor
 	// print the training log
 	bool using_all_samples = true;
 	TrainingLog* new_training_log = new TrainingLog(new_session_name, using_all_samples, *learning_rate, *regularization_rate, patience, 
-		number_of_epochs, best_mse_for_all_samples, number_of_folds);
+		number_of_epochs, best_mse_for_all_samples, number_of_folds, batch_size);
 	new_training_log->print_training_log();
 	log_list.add_training_log(new_training_log);
 	std::cout << "\n";
@@ -304,9 +308,9 @@ void NeuralNetwork::all_sample_train(TrainingLogList& log_list, double** all_nor
 double NeuralNetwork::early_stop_training(double** training_features_normalized, double* log_transformed_target_values, 
 	int number_of_samples, int lower_validation_index, int higher_validation_index)
 {
-	int epoch_number = 0;
-	int fail_decay_epoch = patience / 4 * 3;
+	int epoch_number = 1;
 	double best_mse, current_mse;
+	int fail_decay_epoch = patience * 2 / 3;
 
 	// store the initial value of the learning rate as we will update it during this function
 	double initial_learning_rate = *learning_rate;
@@ -321,10 +325,8 @@ double NeuralNetwork::early_stop_training(double** training_features_normalized,
 
 	best_mse = std::numeric_limits<double>::infinity();
 
-	while (failed_epochs < patience)
+	while (failed_epochs < patience && epoch_number % (number_of_epochs + 1) != 0)
 	{
-		epoch_number++;
-
 		int* random_sample_indices = select_random_batch_indices(number_of_samples, lower_validation_index, higher_validation_index);
 
 		// assign the random indiced samples to the selected normalized features and target values to be passed into the nn
@@ -348,7 +350,7 @@ double NeuralNetwork::early_stop_training(double** training_features_normalized,
 		current_mse /= (higher_validation_index + 1 - lower_validation_index);
 
 		// end training early for this fold if we get extremely large errors
-		if (current_mse > explosion_max)
+		if (current_mse > Constants::explosion_max)
 		{
 			std::cout << "\n\n\t\tExplosion in loss detected - ending this fold early...";
 			break;
@@ -364,8 +366,8 @@ double NeuralNetwork::early_stop_training(double** training_features_normalized,
 			// decay rate for if the number of failed epochs reaches a certain point
 			if (failed_epochs % fail_decay_epoch == 0)
 			{
-				*learning_rate *= decay_rate;
-				std::cout << "\n\n\t\tDecaying learning rate by a factor of " << decay_rate << "... "
+				*learning_rate *= Constants::decay_rate;
+				std::cout << "\n\n\t\tDecaying learning rate by a factor of " << Constants::decay_rate << "... "
 					<< "The new value of the learning rate is " << *learning_rate;
 			}
 		}
@@ -378,9 +380,7 @@ double NeuralNetwork::early_stop_training(double** training_features_normalized,
 			best_mse = current_mse;
 		}
 
-		// end training for this fold if the number of epochs has reached its max
-		if (epoch_number % number_of_epochs == 0)
-			break;
+		epoch_number++;
 	}
 
 	std::cout << "\n\n\t\tRestoring initial learning rate value...";

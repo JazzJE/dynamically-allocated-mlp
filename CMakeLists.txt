@@ -54,9 +54,3 @@ target_link_libraries(${PROJECT_NAME} OpenMP::OpenMP_CXX)
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "9.0")
     target_link_libraries(${PROJECT_NAME} stdc++fs)
 endif()
-
-# Copy executable to project root after building
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}> ${CMAKE_CURRENT_SOURCE_DIR}
-    COMMENT "Copying executable to project root"
-)

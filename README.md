@@ -1,6 +1,6 @@
 # Dynamically Allocated Multi-layer Perceptron
 
-Simple multi-layer perceptron made from scratch that does not use C++'s vector library, and instead opts to function via dynamic memory allocation w/ raw pointers. This project is more of a demonstration of my interest in ML, C++, and math in general than something to be used seriously in production; I just love pointers a lot.
+Simple multi-layer perceptron made from scratch that does not use C++'s vector library, and instead opts to function via dynamic memory allocation w/ raw pointers. This project is more of a demonstration of my interest in ML, C++, and math in general than something to be used seriously in production (I love pointers a lot).
 
 ## Table of Contents
 - [Original Dataset](#original-dataset)
@@ -14,7 +14,7 @@ Simple multi-layer perceptron made from scratch that does not use C++'s vector l
 - [License](#license)
 
 ## Original Dataset
-This project uses the [California Housing Prices](https://www.kaggle.com/datasets/camnugent/california-housing-prices) dataset from Kaggle:
+This project uses a transformed version of the [California Housing Prices](https://www.kaggle.com/datasets/camnugent/california-housing-prices) dataset from Kaggle:
 Nugent, C. (2017). California Housing Prices. Kaggle.
 
 License: CC0 1.0 (Public Domain).
@@ -32,6 +32,7 @@ Other runtime features of the program:
 - Saving the current state of the neural network for future use via the aforementioned neural network files
 - Training the neural network via five-fold training and early-stopping with customizable options
 - Predicting values using random sample features or user-inputted sample features
+- Creation of simple log files which describe parameters used in a given training session
 
 ## Setup
 
@@ -61,7 +62,7 @@ Other runtime features of the program:
 ### Generating a new MLP
 
 **Option 1: Retrain with existing structure**
-- If you would like to retrain a neural network from scratch and still use the given `number_of_neurons_each_hidden_layer` array, simply delete the "nn_current_state" directory in the root folder
+- If you would like to retrain a neural network from scratch and still use the given `number_of_neurons_each_hidden_layer` array, simply delete the `nn_current_state` directory in the root folder
 
 **Option 2: Change MLP structure**
 1. Go to `main.cpp` and edit the `number_of_neurons_each_hidden_layer` array
@@ -91,26 +92,30 @@ Other runtime features of the program:
    - All values (except header) must be integers or doubles
    - Boolean values should be 0s or 1s, not "True"/"False"
    - No strings or characters allowed
-3. **Feature normalization**: To skip normalization for certain features, prefix the feature name with "\~" (e.g., "\~is_coastal_luxury"; refer to initial dataset.csv feature column names)
-4. **MLP Regeneration**: Delete the "nn_current_state" directory to retrain the MLP on the new data set from scratch and get rid of any old valueshttps://www.kaggle.com/datasets/camnugent/california-housing-prices
+3. **Feature normalization**: To skip normalization for certain features, prefix the feature name with "\~" (e.g., "\~is_coastal_luxury"; refer to initial `dataset.csv` feature column names)
+4. **MLP Regeneration**: Delete the `nn_current_state`` directory to retrain the MLP on the new data set from scratch and get rid of any old values
+
+### Training Logs
+    
+1. All training logs are saved to the `training_logs` directory found in the root folder
+    - You can safely delete the `training_logs` directory and any saved logs inside of it whenever you want to, as the program will automatically generate the directory upon start
 
 ### Running the Program
 
-Execute from the root directory:
+Execute from build directory:
 ```bash
 ./neural_network.exe
 ```
 
-**Note**: Run from the root directory, NOT the build directory.
-
 ### Runtime Parameters
 
+- **Number of folds**: How many different sections of samples you want, where each section will be used as a cross-validation set
 - **Batch size**: Number of samples loaded per training epoch
   - Changing this maintains the values of the other runtime parameters
 - **Learning rate**: Controls how fast the MLP changes with respect to loss
 - **Regularization rate**: Adjustment factor for better generalization to new samples
 - **Patience**: Number of failed training epochs before ending training on a fold
-- **Prompt epoch**: Epochs between prompts to stop training (useful for long training sessions)
+- **Number of epochs**: Number of epochs before stopping training
 
 ## Architecture Details
 
@@ -119,7 +124,7 @@ Execute from the root directory:
 - **Normalization**: Z-score feature normalization, BatchNorm between layers
 - **Regularization**: L2 regularization
 - **Loss Function**: Mean Squared Error
-- **Training**: Five-fold cross-validation with early stopping
+- **Training**: k-fold cross-validation with early stopping
 
 ## Performance
 
@@ -161,23 +166,19 @@ This implementation uses dynamic memory allocation with raw pointers, which prov
 - Adjust learning rate (try values between 0.001 and 0.1)
 - Modify regularization rate
 - Increase patience for more training epochs
-- Check data preprocessing (normalization, log-transform)
 
 ### Getting Help
 
 If you encounter issues:
 1. Check that your dataset meets all requirements
 2. Verify the build process completed successfully
-3. Ensure you're running from the correct directory
-4. Try regenerating neural network files by deleting `nn_current_state`
+3. Try regenerating neural network files by deleting the `nn_current_state` directory
 
 ## Contributing
 
 This is primarily an educational project demonstrating C++ memory management and neural network implementation. While not intended for production use, contributions that improve the educational value or fix critical issues are welcome.
 
 ### Areas for potential improvement:
-- Memory leak detection and fixes
-- Additional activation functions
 - More robust error handling
 - Performance optimizations
 - Better documentation, review, or fixes for the mathematical operations and backpropagation formulas 
@@ -185,7 +186,3 @@ This is primarily an educational project demonstrating C++ memory management and
 ## License
 
 This project is open source. The California Housing dataset used is licensed under CC0 1.0 (Public Domain).
-
----
-
-**Educational Note**: This project deliberately uses raw pointers and manual memory management for learning purposes. For production machine learning applications, consider using established libraries like PyTorch, TensorFlow, or modern C++ alternatives with automatic memory management.

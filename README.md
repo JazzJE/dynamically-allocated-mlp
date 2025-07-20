@@ -89,7 +89,7 @@ Other runtime features of the program:
    - Last column must contain target values
         - All target values cannot be negative or equal to zero due to log transformation of target values
    - First line must contain feature names
-   - All values (except header) must be integers or doubles
+   - All values (except feature names) must be integers or doubles
    - Boolean values should be 0s or 1s, not "True"/"False"
    - No strings or characters allowed
 3. **Feature normalization**: To skip normalization for certain features, prefix the feature name with "\~" (e.g., "\~is_coastal_luxury"; refer to initial `dataset.csv` feature column names)
@@ -182,7 +182,3 @@ This is primarily an educational project demonstrating C++ memory management and
 - More robust error handling
 - Performance optimizations
 - Better documentation, review, or fixes for the mathematical operations and backpropagation formulas 
-
-## License
-
-This project is open source. The California Housing dataset used is licensed under CC0 1.0 (Public Domain).

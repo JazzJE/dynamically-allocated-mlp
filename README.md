@@ -83,7 +83,7 @@ Other runtime features of the program:
 
 ### CSV Data Set Requirements
 
-1. **File naming**: Rename your dataset to "dataset.csv" and place it in the root directory
+1. **File naming**: Rename your dataset to `dataset.csv` and place it in the root directory
 2. **Structure requirements**:
    - Last column must contain target values
         - All target values cannot be negative or equal to zero due to log transformation of target values
@@ -92,7 +92,7 @@ Other runtime features of the program:
    - Boolean values should be 0s or 1s, not "True"/"False"
    - No strings or characters allowed
 3. **Feature normalization**: To skip normalization for certain features, prefix the feature name with "\~" (e.g., "\~is_coastal_luxury"; refer to initial `dataset.csv` feature column names)
-4. **MLP Regeneration**: Delete the `nn_current_state`` directory to retrain the MLP on the new data set from scratch and get rid of any old values
+4. **MLP Regeneration**: Delete the `nn_current_state` directory to retrain the MLP on the new data set from scratch and get rid of any old values
 
 ### Training Logs
     
@@ -148,8 +148,8 @@ This implementation uses dynamic memory allocation with raw pointers, which prov
 
 **Program exits with file validation errors**
 - Ensure `dataset.csv` is in the root directory
-- Check that your CSV follows the format requirements; ensure to check the line in which the error was found
-- Verify neural network files aren't corrupted (delete `nn_current_state` folder to regenerate)
+- Check that the CSVs follows the format requirements; ensure to check the line in which the error was found
+- Verify neural network files aren't corrupted or erroneously generated (delete `nn_current_state` folder to regenerate)
 
 **Compilation errors**
 - Ensure you have C++17 or higher
@@ -162,7 +162,7 @@ This implementation uses dynamic memory allocation with raw pointers, which prov
 - Consider the network architecture size relative to available RAM
 
 **Training convergence issues**
-- Adjust learning rate (try values between 0.001 and 0.1)
+- Adjust learning rate (try values between 0.0001 and 0.1)
 - Modify regularization rate
 - Increase patience for more training epochs
 

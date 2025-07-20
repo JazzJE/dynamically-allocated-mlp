@@ -95,9 +95,10 @@ Other runtime features of the program:
 4. **MLP Regeneration**: Delete the `nn_current_state` directory to retrain the MLP on the new data set from scratch and get rid of any old values
 
 ### Training Logs
-    
-1. All training logs are saved to the `training_logs` directory found in the root folder
-    - You can safely delete the `training_logs` directory and any saved logs inside of it whenever you want to, as the program will automatically generate the directory upon start
+      
+1. All logs, when the save selection is chosen in the program, are saved to the `training_logs` directory found in the root folder
+    - The program will automatically generate the directory if it does not exist at its start
+    - It will not parse existent logs inside of the directory to the program for printing
 
 ### Running the Program
 

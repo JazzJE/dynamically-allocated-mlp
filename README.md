@@ -89,9 +89,9 @@ Other runtime features of the program:
         - All target values cannot be negative or equal to zero due to log transformation of target values
    - First line must contain feature names
    - All values (except feature names) must be integers or doubles
-   - Boolean values should be 0s or 1s, not "True"/"False"
-   - No strings or characters allowed
-3. **Feature normalization**: To skip normalization for certain features, prefix the feature name with "\~" (e.g., "\~is_coastal_luxury"; refer to initial `dataset.csv` feature column names)
+        - Boolean values should be 0s or 1s, not "True"/"False"
+        - No strings or characters allowed
+3. **Feature normalization**: To skip normalization for certain features, prefix the feature name in the data set with "\~" (e.g., "\~is_coastal_luxury"; refer to initial `dataset.csv` feature column names)
 4. **MLP Regeneration**: Delete the `nn_current_state` directory to retrain the MLP on the new data set from scratch and get rid of any old values
 
 ### Training Logs

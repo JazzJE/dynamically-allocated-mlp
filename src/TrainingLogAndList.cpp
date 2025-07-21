@@ -103,12 +103,38 @@ void TrainingLogList::save_training_logs()
 
 	else
 	{
-		std::cout << "\n\tSaved training logs!\n";
+		std::cout << "\n\tSaving training logs...\n";
 
 		TrainingLog* curr = head;
 		while (curr != nullptr)
 		{
-			std::fstream session_file(training_logs_file_path / (curr->session_name + ".txt"), std::ios::out | std::ios::trunc);
+			// ask user if they would like to overwrite the current log inside of the files if it exists, else continue
+			std::fstream session_file;
+			session_file.open(training_logs_file_path / (curr->session_name + ".txt"), std::ios::in);
+			if (session_file.is_open())
+			{
+				char option;
+				std::cout << "\n\tIt appears that " << curr->session_name + ".txt" << " already exists. Would you like to overwrite this file with the log in this current program? (Y / N): ";
+				std::cin >> option;
+
+				while (std::cin.peek() != '\n' || option != 'Y' && option != 'N')
+				{
+					std::cin.clear(); // clear error flags
+					std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // ignore the key buffer bad input
+					std::cout << "\t[ERROR] Please enter only a valid input (Y / N): ";
+					std::cin >> option;
+				}
+
+				if (option == 'N')
+				{
+					curr = curr->next_log;
+					session_file.close();
+					continue;
+				}
+			}
+			session_file.close();
+
+			session_file.open(training_logs_file_path / (curr->session_name + ".txt"), std::ios::out | std::ios::trunc);
 
 			session_file << "\n\tTraining configs for " << curr->session_name << ":"
 
@@ -130,5 +156,7 @@ void TrainingLogList::save_training_logs()
 
 			curr = curr->next_log;
 		}
+
+		std::cout << "\n\tDone!\n";
 	}
 }

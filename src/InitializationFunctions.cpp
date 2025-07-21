@@ -156,7 +156,7 @@ int count_number_of_features(std::filesystem::path dataset_file_path)
 }
 
 	// identify which column features are to not be normalized given by if the string begins with a ~
-bool* identify_not_normalize_feature_columns(std::string* feature_names, int number_of_features)
+bool* identify_ignore_normalization_feature_columns(std::string* feature_names, int number_of_features)
 {
 	bool* not_normalize = new bool[number_of_features]();
 

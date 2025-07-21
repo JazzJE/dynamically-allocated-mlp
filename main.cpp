@@ -98,16 +98,15 @@ int main()
 	clear_screen();
 	std::cout << "The program may take a couple of seconds to load...\n" << std::fixed;
 
-	// check if there is a negative number or zero in the number of neurons each hidden layer array
 	int number_of_hidden_layers = sizeof(number_of_neurons_each_hidden_layer) / sizeof(int);
 	
+	// validate the number_of_neurons_each_hidden_layer array
 	if (number_of_hidden_layers == 0)
 	{
 		std::cerr << "[ERROR] Before using this program, please ensure that the \'number_of_neurons_each_hidden_layer\' array "
 			<< "has at least 1 integer.";
 		exit(0);
 	}
-
 	for (int i = 0; i < number_of_hidden_layers; i++)
 		if (number_of_neurons_each_hidden_layer[i] <= 0)
 		{
@@ -151,7 +150,7 @@ int main()
 
 	// from the feature names, identify which features should not be normalized if their column names start with a ~ sign
 	// the calculating means, variances, and features helper methods will ignore these features during their calculations
-	bool* ignore_normalization = identify_not_normalize_feature_columns(feature_names, number_of_features);
+	bool* ignore_normalization = identify_ignore_normalization_feature_columns(feature_names, number_of_features);
 
 	// store the sample numbers so that they can correspond to the correct sample within the dataset when shuffled
 	int* sample_numbers = new int[number_of_samples];
@@ -185,8 +184,6 @@ int main()
 	TrainingLogList log_list(training_logs_file_path);
 
 	std::cout << "\nHello! Welcome to my hard-coded neural network program.\n";
-
-	clear_screen();
 
 	while (true)
 	{

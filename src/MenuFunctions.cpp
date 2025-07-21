@@ -393,7 +393,6 @@ void input_session_name(std::string& new_session_name)
 		}
 }
 
-
 // randomize the order of the training samples
 void randomize_training_samples(double** training_features, double* target_values, double* log_transformed_target_values,
 	int* sample_numbers, int number_of_samples)

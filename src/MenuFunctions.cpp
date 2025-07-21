@@ -9,14 +9,14 @@ MenuOptions get_option()
 	char option;
 	std::cout << "Option Menu:"
 		<< "\n\t1. Train neural network on entire data set"
-		<< "\n\t2. Test different parameters using k-fold training"
-		<< "\n\t3. Save the best neural network state found from entire data set"
+		<< "\n\t2. Test different hyperparameters using k-fold training"
+		<< "\n\t3. Save the current neural network state"
 		<< "\n\t4. Randomize order of training samples"
 		<< "\n\t5. Predict a value using provided sample features"
 		<< "\n\t6. Predict a value using a random sample"
 		<< "\n\t7. Print logs of all training sessions performed in this current program"
 		<< "\n\t8. Save the training logs within this current program"
-		<< "\n\t9. Exit program (will not save the neural network state)"
+		<< "\n\t9. Exit program (will not save the current neural network state)"
 		<< "\nPlease select an option: ";
 	std::cin >> option;
 

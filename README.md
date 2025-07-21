@@ -29,9 +29,9 @@ The program does all of the following automatically within the program w/o editi
 
 Other runtime features of the program:
 - Saving the current state of the neural network for future use via the aforementioned neural network files
-- Training the neural network via five-fold training and early-stopping with customizable options
+- Testing hyperparameters via five-fold training and early-stopping
 - Predicting values using random sample features or user-inputted sample features
-- Creation of simple log files which describe parameters used in a given training session
+- Creation of simple log files which describe hyperparameters used in a given training session
 
 ## Setup
 
@@ -111,7 +111,6 @@ Execute from `build` directory:
 
 - **Number of folds**: How many different sections of samples you want, where each section will be used as a cross-validation set
 - **Batch size**: Number of samples loaded per training epoch
-  - Changing this maintains the values of the other runtime parameters
 - **Learning rate**: Controls how fast the MLP changes with respect to loss
 - **Regularization rate**: Adjustment factor for better generalization to new samples
 - **Patience**: Number of failed training epochs before ending training on a fold
@@ -124,7 +123,8 @@ Execute from `build` directory:
 - **Normalization**: Z-score feature normalization, BatchNorm between layers
 - **Regularization**: L2 regularization
 - **Loss Function**: Mean Squared Error
-- **Training**: k-fold cross-validation with early stopping
+- **Cross-Validation**: k-fold with early stopping
+- **Learning Rate Scheduling**: ReudceLROnPlateau
 
 ## Performance
 

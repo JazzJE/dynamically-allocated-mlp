@@ -176,6 +176,7 @@ void DenseLayer::calculate_derived_values(double** next_layer_derived_values, do
 			affine_transform_derived_values[n][s] = 0;
 
 	// current layer neuron
+	#pragma omp parallel for
 	for (int cln = 0; cln < number_of_neurons; cln++)
 	{
 		// for the current sample
@@ -191,7 +192,6 @@ void DenseLayer::calculate_derived_values(double** next_layer_derived_values, do
 		double affine_derived_value_sum = 0.0; // ∑∂L/∂y_j; summation of derivative of loss in relation to each batch normalization value
 		double affine_derived_value_difference_sum = 0.0; // ∑(x_j - μ)∂L/∂y_j; summation of derivatibe of loss in relation to each normalization value times the difference of the linear transformation value and mean
 
-		#pragma omp parallel for reduction(+:affine_derived_value_sum, affine_derived_value_difference_sum)
 		for (int s = 0; s < batch_size; s++)
 		{
 			affine_derived_value_sum += affine_transform_derived_values[cln][s];
@@ -279,6 +279,7 @@ void DenseLayer::mini_batch_gd_scales_and_shift()
 // use exponential moving averages to update the running means and variances
 void DenseLayer::update_running_mean_and_variance()
 {
+	#pragma omp parallel for
 	for (int n = 0; n < number_of_neurons; n++)
 	{
 		running_means[n] = momentum * running_means[n] + (1 - momentum) * training_means[n];

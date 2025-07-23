@@ -171,11 +171,11 @@ int main()
 
 	// create a directory to store the neural network files if not already made
 	if (std::filesystem::create_directory(nn_saved_state_file_path))
-		std::cout << "\n\tCreating directory to store the state of your neural network...\n";
+		std::cout << "\n\tCreating " << nn_saved_state_directory_name << " directory to store the state of your neural network...\n";
 
 	// create a directory to store the training logs if not already made
 	if (std::filesystem::create_directory(training_logs_file_path))
-		std::cout << "\n\tCreating directory to store the training logs...\n";
+		std::cout << "\n\tCreating " << training_logs_directory_name << " directory to store the training logs...\n";
 
 	char option;
 	NeuralNetwork neural_network(number_of_neurons_each_hidden_layer, net_number_of_neurons_in_hidden_layers, number_of_hidden_layers, 

@@ -1,6 +1,6 @@
 # Dynamically Allocated Multi-layer Perceptron
 
-Simple multi-layer perceptron made from scratch that does not use C++'s vector library, and instead opts to function via dynamic memory allocation w/ raw pointers. This project is more of a demonstration of my interest in ML, C++, and math in general than something to be used seriously in production (I love pointers a lot).
+Simple multi-layer perceptron made from scratch that does not use C++'s vector library, and instead opts to function via dynamic memory allocation w/ raw pointers. This project is more of a demonstration of my personal interest in ML, C++, and math in general than something to be used seriously in production (I love pointers a lot).
 
 ## Table of Contents
 - [Original Dataset](#original-dataset)
@@ -23,13 +23,12 @@ The program does all of the following automatically within the program w/o editi
 
 - Normalizes all training data's features
 - Log-transforms target values
-- Randomizes the order of all samples
-- Generates weights, biases, running means, running variances, scales, and shifts files that allow you to save the state of the neural network if the files do not exist, if the data set file has changed, or if the structure of the MLP has changed
+- Generates files for the neural network that allow it to be saved
 - Validates all associated files that will be used within the program (data set and neural network files)
+- Randomizes the order of all samples
 
 Other runtime features of the program:
-- Saving the current state of the neural network for future use via the aforementioned neural network files
-- Testing hyperparameters via five-fold training and early-stopping
+- Testing hyperparameters via k-fold training and early-stopping
 - Predicting values using random sample features or user-inputted sample features
 - Creation of simple log files which describe hyperparameters used in a given training session
 

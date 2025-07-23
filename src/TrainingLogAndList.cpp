@@ -103,7 +103,7 @@ void TrainingLogList::save_training_logs()
 
 	else
 	{
-		std::cout << "\n\tSaving training logs...\n";
+		std::cout << "\n\tSaving training logs to " << training_logs_file_path << "...\n";
 
 		TrainingLog* curr = head;
 		while (curr != nullptr)

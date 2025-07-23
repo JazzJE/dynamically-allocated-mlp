@@ -29,10 +29,6 @@ NeuralNetwork::NeuralNetwork(const int* number_of_neurons_each_hidden_layer, int
 
 	number_of_hidden_layers(number_of_hidden_layers), learning_rate(new double), regularization_rate(new double),
 
-	ss_loader(network_weights, network_biases, network_running_means, network_running_variances, network_scales, network_shifts,
-		number_of_neurons_each_hidden_layer, number_of_hidden_layers, net_number_of_neurons_in_hidden_layers, 
-		number_of_features),
-
 	// dynamic memory allocation of key components
 	network_weights(allocate_memory_for_weights(number_of_neurons_each_hidden_layer, number_of_hidden_layers, number_of_features)), 
 	network_biases(allocate_memory_for_biases(number_of_neurons_each_hidden_layer, number_of_hidden_layers)),
@@ -40,8 +36,11 @@ NeuralNetwork::NeuralNetwork(const int* number_of_neurons_each_hidden_layer, int
 	network_running_variances(new double[net_number_of_neurons_in_hidden_layers]),
 	network_scales(new double[net_number_of_neurons_in_hidden_layers]),
 	network_shifts(new double[net_number_of_neurons_in_hidden_layers]),
+
+	ss_loader(network_weights, network_biases, network_running_means, network_running_variances, network_scales, network_shifts,
+		number_of_neurons_each_hidden_layer, number_of_hidden_layers, net_number_of_neurons_in_hidden_layers,
+		number_of_features),
 	
-	batch_size(batch_size),
 	hidden_layers(new DenseLayer*[number_of_hidden_layers]), net_number_of_neurons_in_hidden_layers(net_number_of_neurons_in_hidden_layers),
 	
 	// output layer
@@ -115,6 +114,8 @@ NeuralNetwork::~NeuralNetwork()
 	delete[] network_running_variances;
 	delete[] network_scales;
 	delete[] network_shifts;
+
+	delete[] number_of_neurons_each_hidden_layer;
 }
 
 // helper function to create a dynamically allocated version of the number of neurons each hidden layer array for easy access for
@@ -278,7 +279,8 @@ void NeuralNetwork::all_sample_train(TrainingLogList& log_list, double** all_nor
 
 	// ask user if they would like to keep the state of the neural network locally within the program
 	char option;
-	std::cout << "\n\tWould you like to use this neural network for the rest of the current program duration?"
+	std::cout << "\n\tWould you like to continue using the most recent version of the neural network from this training session?"
+		<< "\n\t\t- \"Most recent\" neural network refers to **the state of the neural network in the last epoch** of this session"
 		<< "\n\t\t- Note that this will NOT save the network; select menu option " 
 		<< static_cast<char>(MenuOptions::SAVE_NETWORK_STATE_OPTION) << " after entering \'Y\' if desired (Y / N) : ";
 	std::cin >> option;

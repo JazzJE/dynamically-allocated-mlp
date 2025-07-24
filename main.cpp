@@ -101,16 +101,10 @@ int main()
 	int number_of_hidden_layers = sizeof(number_of_neurons_each_hidden_layer) / sizeof(int);
 	
 	// validate the number_of_neurons_each_hidden_layer array
-	if (number_of_hidden_layers == 0)
-	{
-		std::cerr << "[ERROR] Before using this program, please ensure that the \'number_of_neurons_each_hidden_layer\' array "
-			<< "has at least 1 integer.";
-		exit(0);
-	}
 	for (int i = 0; i < number_of_hidden_layers; i++)
 		if (number_of_neurons_each_hidden_layer[i] <= 0)
 		{
-			std::cerr << "Before using this program, please ensure that there are no zero or negative values in the "
+			std::cerr << "\n[ERROR] Before using this program, please ensure that there are no zero or negative values in the "
 				<< "\"number_of_neurons_each_hidden_layer\" array";
 			exit(0);
 		}
@@ -127,7 +121,7 @@ int main()
 	std::fstream dataset_file(dataset_file_path, std::ios::in);
 	if (!dataset_file) 
 	{
-		std::cerr << "[ERROR] The dataset could not be found within the project; please edit the \"dataset_file_name\" variable "
+		std::cerr << "\n[ERROR] The dataset could not be found within the project; please edit the \"dataset_file_name\" variable "
 			<< "to the dataset's name, or otherwise include the dataset within the project." << std::endl;
 		exit(0);
 	}

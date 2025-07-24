@@ -123,7 +123,7 @@ Execute from `build` directory:
 - **Regularization**: L2 regularization
 - **Loss Function**: Mean Squared Error
 - **Cross-Validation**: k-fold with early stopping
-- **Learning Rate Scheduling**: ReudceLROnPlateau
+- **Learning Rate Scheduling**: ReduceLROnPlateau
 
 ## Performance
 
